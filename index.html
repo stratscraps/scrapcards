@@ -1,0 +1,2127 @@
+import React, { useState, useEffect } from 'react';
+import { Lightbulb, Send } from 'lucide-react';
+
+const InspirationGenerator = () => {
+  const [currentItem, setCurrentItem] = useState(null);
+  const [view, setView] = useState('generate');
+  const [loading, setLoading] = useState(false);
+  const [submitForm, setSubmitForm] = useState({
+    type: 'quote',
+    content: '',
+    author: '',
+    imageUrl: '',
+    submittedBy: ''
+  });
+  const [submitStatus, setSubmitStatus] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [collection, setCollection] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [editingItem, setEditingItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [generateFilter, setGenerateFilter] = useState('all'); // 'all', 'quote', 'image'
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [bulkUploadMode, setBulkUploadMode] = useState(false);
+  const [bulkImages, setBulkImages] = useState([]);
+
+  const ADMIN_PASSWORD = 'stratscrap2024'; // Change this to your desired password
+
+  // Initial curated collection from Are.na
+  const initialCollection = [
+    { type: 'quote', content: 'Strategy and tactics without diagnosis is just panic.', author: '' },
+    { type: 'quote', content: 'A single data point is almost always useless. Insight comes from one point in comparison to another.', author: '' },
+    { type: 'quote', content: 'Not all problems are the problem', author: '' },
+    { type: 'quote', content: 'Simplify, Then Exaggerate', author: '' },
+    { type: 'quote', content: 'We all know that every human being has basic physical needs: for food, for water, for shelter, for clean air. It turns out that, in the same way, all humans have certain basic psychological needs. We need to feel we belong. We need to feel valued. We need to feel we\'re good at something. We need to feel we have a secure future.', author: '' },
+    { type: 'quote', content: 'What conventions Must you break? What conventions could you break? What conventions should you NOT break?', author: '' },
+    { type: 'quote', content: 'Define the actual thing we\'re doing before naming the idea etc.', author: '' },
+    { type: 'quote', content: 'Extreme principles can lead to extreme clarity.', author: '' },
+    { type: 'quote', content: 'Anything incredible is going to be offensive to somebody', author: '' },
+    { type: 'quote', content: 'The goal of marketing, then — especially as it pertains to things people would rather not pay attention to — is in making sure that the message taints the tastelessness of existence, and forces us to pay attention.', author: '' },
+    { type: 'quote', content: 'You want to deliver to the world what you would buy if you were on the other end.', author: 'Shane Parrish, Farnham Street' },
+    { type: 'quote', content: 'Most geniuses—especially those who lead others—prosper not by deconstructing intricate complexities but by exploiting unrecognized simplicities.', author: 'Andy Benoit' },
+    { type: 'quote', content: 'Advertisements constitute the only \'good news\' in the newspaper.', author: 'Marshal McLuhan' },
+    { type: 'quote', content: 'Communication is not what said but what\'s taken from it.', author: '' },
+    { type: 'quote', content: 'Your definition of the problem is likely to be more important than your definition of the answer', author: '' },
+    { type: 'quote', content: 'Ads (and briefs and everything really) only need to be three things – true, distinctive, motivating.', author: '' },
+    { type: 'quote', content: 'As Churchill said, "Never let the truth spoil a good story."', author: '' },
+    { type: 'quote', content: 'Identity formation is inextricably linked to the urge to consume', author: '' },
+    { type: 'quote', content: 'The only cool PR is provided by one\'s enemies. They toil incessantly and for free', author: '' },
+    { type: 'quote', content: 'Haters make our lovers love us more.', author: '' },
+    { type: 'quote', content: 'You can be relevant as hell and still be boring as fuck', author: 'Martin Weigel' },
+    { type: 'quote', content: 'Compromise is thought to typically be when ideas are taken out. But the most dangerous compromise happens when things are added in', author: 'Pritchard' },
+    { type: 'quote', content: 'Differentiation is fleeting', author: '' },
+    { type: 'quote', content: 'For the mediocre there is no hope. Mediocrity is a sin.', author: 'Jack London' },
+    { type: 'quote', content: 'Most people aren\'t "in the market" for anything most of the time.', author: '' },
+    { type: 'quote', content: 'Why restrict yourself with facts when you can dramatize fiction', author: '' },
+    { type: 'quote', content: 'Brands don\'t exist in real life, they\'re in people\'s heads.', author: '' },
+    { type: 'quote', content: 'There is no Soylent version of thought and reflection — creativity is unpredictable, and it simply takes time.', author: '' },
+    { type: 'quote', content: 'We are makers of difference.', author: '' },
+    { type: 'quote', content: 'In order to be profitable, capitalism needs a constant creation of new differences, and what collectors are looking for is the latest difference.', author: 'Luc Boltanski' },
+    { type: 'quote', content: 'The hero of the story should be the thing you want your audience to support. The villain should be situational and systemic factors.', author: '' },
+    { type: 'quote', content: 'Only put details where you want people to pay attention', author: '' },
+    { type: 'quote', content: 'The essence of strategy is choosing what not to do.', author: 'Michael Porter' },
+    { type: 'quote', content: 'Say big things with small words', author: '' },
+    { type: 'quote', content: 'A brand\'s positioning is not yours to own.', author: '' },
+    { type: 'quote', content: 'Smart clients dont give a shit about 30 slides of set up to an idea. they just care if the idea is good.', author: '' },
+    { type: 'quote', content: 'The job of the brief is not simply to define the existing problem. We don\'t need strategists for that, the client can do that. The job of the brief is to change, to reframe, the problem.', author: '' },
+    { type: 'quote', content: 'Creativity is about solving a problem in a new way.', author: '' },
+    { type: 'quote', content: 'Effective advertising must find new ways to repeat itself.', author: '' },
+    { type: 'quote', content: 'Positioning is a competitor driven, not customer driven, approach.', author: '' },
+    { type: 'quote', content: 'Would we rather be wasteful and effective or efficient and impotent?', author: '' },
+    { type: 'quote', content: 'Messages can be microtargeted, but meaning has to be mass-produced.', author: '' },
+    { type: 'quote', content: 'The greater the similarity between two products, the less reason/rationality has a place', author: '' },
+    { type: 'quote', content: 'We can be outrageous to a purpose. That, for me, is great advertising.', author: '' },
+    { type: 'quote', content: 'It\'s our job to excite people, not to try to herd them.', author: '' },
+    { type: 'quote', content: 'The brief is the what we are doing. The creative is the how', author: '' },
+    { type: 'quote', content: 'Just one thing is enough. You only need to come back with one usable story to make all of your work worth it.', author: '' },
+    { type: 'quote', content: 'Don\'t get stuck. If you feel like what you\'re doing at any moment isn\'t going to lead anywhere, get out of there and go explore something/someone else.', author: '' },
+    { type: 'quote', content: 'In order to come back with unexpected insights, you have to take unexpected actions.', author: '' },
+    { type: 'quote', content: 'Adapt what is useful, reject what is useless, and add what is specifically your own', author: 'Bruce Lee' },
+    { type: 'quote', content: 'Many clients actually don\'t want insight – although that\'s exactly what they say they want. Insight is challenging because it forces you to change the way you think, the way you act, the way you feel, and the goals you seek.', author: '' },
+    { type: 'quote', content: 'Not everything needs to be strategy heavy', author: '' },
+    { type: 'quote', content: 'It should be worthy of remark', author: '' },
+    { type: 'quote', content: 'Don\'t mistake clever for interesting', author: '' },
+    { type: 'quote', content: 'Beware the Pander Zone', author: '' },
+    { type: 'quote', content: 'What is at the intersection of utility and novelty?', author: '' },
+    { type: 'quote', content: 'Good Strat: Simple. Great Strat: Memorable', author: '' },
+    { type: 'quote', content: 'Cut back until it hurts', author: '' },
+    { type: 'quote', content: 'Write it ugly before anything else', author: '' },
+    { type: 'quote', content: 'Always start with the Ask', author: '' },
+    { type: 'quote', content: 'MAKE IT ONE THING', author: '' },
+    { type: 'quote', content: 'People don\'t buy products, they buy better versions of themselves', author: '' },
+    { type: 'quote', content: 'The longer the brief, the more things there are to focus on that aren\'t the thing.', author: '' },
+    { type: 'quote', content: 'Good work cannot be made in a trust void', author: '' },
+    { type: 'quote', content: 'Nothing is ownable until you own it', author: '' },
+    { type: 'quote', content: 'You can\'t have a strategy if you haven\'t talked to anyone.', author: '' },
+    { type: 'quote', content: 'By definition, we\'re here to make noise.', author: '' },
+    { type: 'quote', content: 'What is the myth we want to create?', author: '' },
+    { type: 'quote', content: 'CLARITY. BREVITY. NOVELTY.', author: '' },
+    { type: 'quote', content: 'Be clear in the nonnegotiable.', author: '' },
+    { type: 'quote', content: 'Slay a sacred cow.', author: '' },
+    { type: 'quote', content: 'Good strategy takes things off the table', author: '' },
+    { type: 'quote', content: 'Sometimes looking is more important than finding', author: '' },
+    { type: 'quote', content: 'Have a point of view before even thinking about opening keynote.', author: '' },
+    { type: 'quote', content: 'Culture is passed hand to hand. You can\'t be part of it and maintain control.', author: '' },
+    { type: 'quote', content: 'At the end of the day, it should tap into something deeply human, or make you famous.', author: '' },
+    { type: 'quote', content: 'Like a flick to the brain.', author: '' },
+    { type: 'quote', content: 'It is of extreme importance to maintain a vision for the work.', author: '' },
+    { type: 'quote', content: 'There are trends, but no rules', author: '' },
+    { type: 'quote', content: 'Diagnosis → Guiding Policy → Coherent Actions', author: '' },
+    { type: 'quote', content: 'What do they secretly wish for?', author: '' },
+    { type: 'quote', content: 'Listen to your gut. You already know more than you know.', author: '' },
+    { type: 'quote', content: 'Whether or not it is accurate is less important than whether or not it is right', author: '' },
+    { type: 'quote', content: 'Kill the reveal.', author: '' },
+    { type: 'quote', content: 'Open emotionally. Close rationally.', author: '' },
+    { type: 'quote', content: 'Don\'t be blinded by the now', author: '' },
+    { type: 'quote', content: 'Find the intersection of irrefutable and reckless', author: '' },
+    { type: 'quote', content: 'A long awkward sentence that demonstrates management\'s inability to think clearly.', author: 'Scott Adams on Mission Statements' },
+    { type: 'quote', content: 'Nothing defines humans better than their willingness to do irrational things in the pursuit of phenomenally unlikely payoffs. This is the principle behind lotteries, dating, and religion.', author: 'Scott Adams' },
+    { type: 'quote', content: 'People are very open-minded about new things - as long as they\'re exactly like the old ones.', author: 'Charles F. Kettering' },
+    { type: 'quote', content: 'If you want to kill any idea in the world today, get a committee working on it.', author: 'Charles F. Kettering' },
+    { type: 'quote', content: 'The wisest are the most annoyed at the loss of time.', author: 'Dante Alighieri' },
+    { type: 'quote', content: 'Never speak of yourself to others; make them talk about themselves instead; therein lies the whole art of pleasing.', author: 'Edmond de Goncourt' },
+    { type: 'quote', content: 'Most people need love and acceptance a lot more than they need advice.', author: 'Bob Goff' },
+    { type: 'quote', content: 'Failure is a resource that can be managed.', author: 'Scott Adams' },
+    { type: 'quote', content: 'Don\'t be the person who says yes with their mouth but no with their actions.', author: 'Ryan Holiday' },
+    { type: 'quote', content: 'In the information game, the race doesn\'t go to the swift, it goes to the selective.', author: 'Tim Ferriss' },
+    { type: 'quote', content: 'If the path before you is clear, you\'re probably on someone else\'s.', author: 'Joseph Campbell' },
+    { type: 'quote', content: 'The most courageous decision that you can make each day is to be in a good mood.', author: 'Voltaire' },
+    { type: 'quote', content: 'Let everything happen to you: beauty and terror. Just keep going. No feeling is final.', author: 'Rainer Maria Rilke' },
+    { type: 'quote', content: 'Things usually happen around us, not to us.', author: 'Unknown' },
+    { type: 'quote', content: 'Thinking is easy, acting is difficult, and to put one\'s thoughts into action is the most difficult thing in the world.', author: 'Johann Wolfgang von Goethe' },
+    { type: 'quote', content: 'Character is like a tree and reputation like a shadow. The shadow is what we think of it; the tree is the real thing.', author: 'Abraham Lincoln' },
+    { type: 'quote', content: 'It\'s not always that we need to do more but rather that we need to focus on less.', author: 'Nathan W. Morris' },
+    { type: 'quote', content: 'Perfection is finally attained not when there is no longer anything to add, but when there is no longer anything to take away.', author: 'Antoine de Saint-Exupéry' },
+    { type: 'quote', content: 'I was wise enough to never grow up while fooling most people into believing I had.', author: 'Margaret Mead' },
+    { type: 'quote', content: 'Man is most nearly himself when he achieves the seriousness of a child at play.', author: 'Heraclitus' },
+    { type: 'quote', content: 'If you change the way you look at things, the things you look at change.', author: 'Wayne Dyer' },
+    { type: 'quote', content: 'When we have alternatives, we compromise instead of commit.', author: 'Seth Godin' },
+    { type: 'quote', content: 'In a world where information is abundant and easy to access, the real advantage is knowing where to focus.', author: 'James Clear' },
+    { type: 'quote', content: 'The real problem of humanity is the following: we have paleolithic emotions; medieval institutions; and god-like technology.', author: 'E.O. Wilson' },
+    { type: 'quote', content: 'There comes a point where we need to stop just pulling people out of the river. We need to go upstream and find out why they\'re falling in.', author: 'Bishop Desmond Tutu' },
+    { type: 'quote', content: 'Asking myself "is this helping me get what I want" is becoming one of my favorite questions.', author: 'Shane Parrish' },
+    { type: 'quote', content: 'I wish I actually got in trouble, real trouble with my work ... such as getting arrested for it. Then I would know I was doing something right.', author: 'James Victore' },
+    { type: 'quote', content: 'The Law of Triviality: members of an organization give disproportionate weight to trivial issues.', author: 'C. Northcote Parkinson' },
+    { type: 'quote', content: 'When the stakes are high, when it has to be a HIT, in all capital letters, we overinvest. Our insistence that it be guaranteed to work almost ensures that it won\'t. Forcing something to be big makes it small.', author: '' },
+    { type: 'quote', content: 'If you can\'t explain something to a child, you don\'t understand it yourself.', author: '' },
+    { type: 'quote', content: 'The best propagandists convince people of a lie not by stating the lie directly but by making statements that tacitly assume the lie as a premise.', author: '' },
+    { type: 'quote', content: 'Conflict avoidance slowly rots your whole life', author: '' },
+    { type: 'quote', content: 'I know that it feels horrible to create from a place of defense. For example: you will find it exceedingly difficult to write if your motive is trying to convince people that you are not dumb, or not boring.', author: '' },
+    { type: 'quote', content: 'The story of German scientific forestry transmits a timeless truth: When we simplify complex systems, we destroy them, and the devastating consequences sometimes aren\'t obvious until it\'s too late.', author: '' },
+    { type: 'quote', content: 'Kill the reveal. We\'re not magicians. State your point and back it up like a normal person.', author: '' },
+    { type: 'quote', content: 'Outcomes over outputs', author: '' },
+    { type: 'quote', content: 'How would you write your brief if you could do it anonymously?', author: '' },
+    { type: 'quote', content: 'Why are we doing this?', author: '' },
+    { type: 'quote', content: 'What\'s the simplest explanation?', author: '' },
+    { type: 'quote', content: 'What reaction should all the creative achieve?', author: '' },
+    { type: 'quote', content: 'What\'s your most controversial opinion?', author: '' },
+    { type: 'quote', content: 'What little frictions exist that might bleed out the work if allowed to compound?', author: '' },
+    { type: 'quote', content: 'Are you solving a symptom or a cause?', author: '' },
+    { type: 'quote', content: 'What\'s the most ad hoc way you might solve this?', author: '' },
+    { type: 'quote', content: 'Who told you this was the right problem to solve?', author: '' },
+    { type: 'quote', content: 'Everyone has access to the same consumers. What does the brand have access to that nobody else does?', author: '' },
+    { type: 'quote', content: 'When was the last time you were wrong?', author: '' },
+    { type: 'quote', content: 'Where has there been compromise? What are the consequences?', author: '' },
+    { type: 'quote', content: 'Does your agency make money from the process or the output?', author: '' },
+    { type: 'quote', content: 'Do you have a point of view? If not, don\'t start the slides.', author: '' },
+    { type: 'quote', content: 'What\'s the weirdest thing you noticed today?', author: '' },
+    { type: 'quote', content: 'What\'s the stupidest question you don\'t know the answer to? Ask it.', author: '' },
+    { type: 'quote', content: 'How are you limited by the tools at your disposal? How are the tools dictating the process?', author: '' },
+    { type: 'quote', content: 'Are you being ruthlessly clear on what needs to be done?', author: '' },
+    { type: 'quote', content: 'Did you write it ugly before you wrote it nice?', author: '' },
+    { type: 'quote', content: 'What is the most enlightening thing you could do that might land you in jail?', author: '' },
+    { type: 'quote', content: 'Have you talked about it with anyone outside the industry?', author: '' },
+    { type: 'quote', content: 'What mood are they in when they buy?', author: '' },
+    { type: 'quote', content: 'Post review, ignore what they said – Why did they say it?', author: '' },
+    { type: 'quote', content: 'Of the 2,000 ads we see a day, 11% are actually remembered. 4% are remembered favorably. Will this route survive those odds?', author: '' },
+    { type: 'quote', content: 'What table are we playing at? Did we choose it?', author: '' },
+    { type: 'quote', content: 'When was the last time you casually browsed the things you have saved for future reference?', author: '' },
+    { type: 'quote', content: 'Is your research questioning the established authority?', author: '' },
+    { type: 'quote', content: 'How might this look from someone else\'s perspective?', author: '' },
+    { type: 'quote', content: 'Who do you care for? Who cares for you?', author: '' },
+    { type: 'quote', content: 'If we do everything right, what changes?', author: '' },
+    { type: 'quote', content: 'What are the arteries of the idea?', author: '' },
+    { type: 'quote', content: 'What allows the problem to occur?', author: '' },
+    { type: 'quote', content: 'How much sleep do you get?', author: '' },
+    { type: 'quote', content: 'When was the last time you were treated like the expert in the room? What was it you were the expert on?', author: '' },
+    { type: 'quote', content: 'What would have to be true? If _____ were true, we could…', author: '' },
+    { type: 'quote', content: 'What\'s the most relevant thing that is 100% offline?', author: '' },
+    { type: 'quote', content: 'What would genuinely shock the audience?', author: '' },
+    { type: 'quote', content: 'Are you having fun?', author: '' },
+    { type: 'quote', content: 'How often do you find yourself surprised?', author: '' },
+    { type: 'quote', content: 'What\'s the second most absurd thing you could do?', author: '' },
+    { type: 'quote', content: 'Who is the highest profile expert on the subject? Write them for a quote. You never know.', author: '' },
+    { type: 'quote', content: 'What would cause the most chaos?', author: '' },
+    { type: 'quote', content: 'Are you getting the time you need? Demand it.', author: '' },
+    { type: 'quote', content: 'How does telling people what you do for work make you feel?', author: '' },
+    { type: 'quote', content: 'What would happen if you went AWOL for a day?', author: '' },
+    { type: 'quote', content: 'What is currently bringing you hope?', author: '' },
+    { type: 'quote', content: 'In your free time, do you do activities or passivities?', author: '' },
+    { type: 'quote', content: 'What changes if you write it as a letter?', author: '' },
+    { type: 'quote', content: 'What are your hobbies?', author: '' },
+    { type: 'quote', content: 'What is your vision for the future?', author: '' },
+    { type: 'quote', content: 'What choices are yours alone?', author: '' },
+    { type: 'quote', content: 'Imagine you\'re an investigative journalist. How would you do your research?', author: '' },
+    { type: 'quote', content: 'What is the role of advertising?', author: '' },
+    { type: 'quote', content: 'What are the wild cards?', author: '' },
+    { type: 'quote', content: 'Which senior person do you plan to disappoint by not including because they\'re not good at this?', author: '' },
+    { type: 'quote', content: 'What did you decide to leave behind?', author: '' },
+    { type: 'quote', content: 'Where\'s the controversy?', author: '' },
+    { type: 'quote', content: 'Would a 12 year old understand it?', author: '' },
+    { type: 'quote', content: 'What concerns you?', author: '' },
+    { type: 'quote', content: 'In meetings: what do you do? Why are you here? Like right now?', author: '' },
+    { type: 'quote', content: 'What was the last thing you learned about yourself?', author: '' },
+    { type: 'quote', content: 'What are the relevant words / phrases? Gather them and translate to a variety of languages and then translate back to english.', author: '' },
+    { type: 'quote', content: 'When was the last time you and your CD had a heart to heart?', author: '' },
+    { type: 'quote', content: 'What will people walk out of the briefing having learned?', author: '' },
+    { type: 'quote', content: 'What has most surprised you?', author: '' },
+    { type: 'quote', content: 'Have you gone for a walk today?', author: '' },
+    { type: 'quote', content: 'What\'s holding you back?', author: '' },
+    { type: 'quote', content: 'What lesson do you refuse to learn?', author: '' },
+    { type: 'quote', content: 'What are the bigger social implications? How could this do less harm?', author: '' },
+    { type: 'quote', content: 'What has been the most persistent thought?', author: '' },
+    { type: 'quote', content: 'When was the last time you experienced something for the first time?', author: '' },
+    { type: 'quote', content: 'What can you do that would challenge social media behavior rather than adhere to it?', author: '' },
+    { type: 'quote', content: 'How do you steal time back from your job?', author: '' },
+    { type: 'quote', content: 'What are you holding onto because you like it, but does not actually add value?', author: '' },
+    { type: 'quote', content: 'What are you a student of?', author: '' },
+    { type: 'quote', content: 'What are you rebelling against?', author: '' },
+    { type: 'quote', content: 'What is your drug of choice?', author: '' },
+    { type: 'quote', content: 'What\'s the bare minimum?', author: '' },
+    { type: 'quote', content: 'What do you need?', author: '' },
+    { type: 'quote', content: 'So what?', author: '' },
+    { type: 'quote', content: 'What do you mean by that?', author: '' },
+    { type: 'quote', content: 'How could you make this more playful?', author: '' },
+    { type: 'quote', content: 'What will you do to make it uniquely yours?', author: '' },
+    { type: 'quote', content: 'What question haven\'t you asked?', author: '' },
+    { type: 'quote', content: 'What path haven\'t you considered?', author: '' },
+    { type: 'quote', content: 'What can you do today that you couldn\'t do a year ago?', author: '' },
+    { type: 'quote', content: 'What are you certain of?', author: '' },
+    { type: 'quote', content: 'What are you only pretending to be interested in?', author: '' },
+    { type: 'quote', content: 'What impact are you having?', author: '' },
+    { type: 'quote', content: 'What are you taking seriously? Stop it.', author: '' },
+    { type: 'quote', content: 'What would be the most deviant thing to do?', author: '' },
+    { type: 'quote', content: 'When do you lose track of time?', author: '' },
+    { type: 'quote', content: 'Are there people on your team who would back you up, even at their own expense?', author: '' },
+    { type: 'quote', content: 'When are you at your best?', author: '' },
+    { type: 'quote', content: 'Who are you without your job?', author: '' },
+    { type: 'quote', content: 'Now what?', author: '' }
+  ];
+
+  useEffect(() => {
+    loadCollection();
+    loadSubmissions();
+  }, []);
+
+  const loadCollection = async () => {
+    try {
+      const result = await window.storage.get('inspiration-collection');
+      const loadedCollection = result ? JSON.parse(result.value) : null;
+      
+      // If we have a stored collection, ensure all items have IDs
+      if (loadedCollection && loadedCollection.length > 0) {
+        const collectionWithIds = loadedCollection.map((item, idx) => ({
+          ...item,
+          _id: item._id || `item_${Date.now()}_${idx}`
+        }));
+        
+        // Only update storage if we added IDs
+        if (collectionWithIds.some(item => !loadedCollection.find(orig => orig._id === item._id))) {
+          await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
+        }
+        
+        setCollection(collectionWithIds);
+      } else {
+        // No stored collection, use initial collection with IDs
+        const collectionWithIds = initialCollection.map((item, idx) => ({
+          ...item,
+          _id: `item_${Date.now()}_${idx}`
+        }));
+        await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
+        setCollection(collectionWithIds);
+      }
+    } catch (error) {
+      console.error('Error loading collection:', error);
+      const collectionWithIds = initialCollection.map((item, idx) => ({
+        ...item,
+        _id: `item_${Date.now()}_${idx}`
+      }));
+      await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
+      setCollection(collectionWithIds);
+    }
+  };
+
+  const loadSubmissions = async () => {
+    try {
+      const result = await window.storage.get('submissions');
+      if (result) {
+        setSubmissions(JSON.parse(result.value));
+      }
+    } catch (error) {
+      console.error('Error loading submissions:', error);
+    }
+  };
+
+  const generateRandom = async () => {
+    setLoading(true);
+    try {
+      const result = await window.storage.get('inspiration-collection');
+      const currentCollection = result ? JSON.parse(result.value) : initialCollection;
+      
+      // Filter based on selected type
+      const filteredItems = generateFilter === 'all' 
+        ? currentCollection 
+        : currentCollection.filter(item => item.type === generateFilter);
+      
+      if (filteredItems.length === 0) {
+        alert(`No ${generateFilter === 'all' ? 'items' : generateFilter + 's'} found in collection.`);
+        setLoading(false);
+        return;
+      }
+      
+      const randomItem = filteredItems[Math.floor(Math.random() * filteredItems.length)];
+      
+      setTimeout(() => {
+        setCurrentItem(randomItem);
+        setLoading(false);
+      }, 300);
+    } catch (error) {
+      console.error('Error loading collection:', error);
+      const randomItem = initialCollection[Math.floor(Math.random() * initialCollection.length)];
+      setTimeout(() => {
+        setCurrentItem(randomItem);
+        setLoading(false);
+      }, 300);
+    }
+  };
+
+  const handleLogin = () => {
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setPassword('');
+    } else {
+      alert('Incorrect password');
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    console.log('Deleting item with ID:', itemId);
+    
+    setLoading(true);
+    try {
+      console.log('Current collection length:', collection.length);
+      
+      // Filter out by ID
+      const updatedCollection = collection.filter(item => item._id !== itemId);
+      
+      console.log('Updated collection length:', updatedCollection.length);
+      
+      // Update state
+      setCollection(updatedCollection);
+      
+      // Update storage
+      await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
+      
+      console.log('Delete successful');
+      setDeleteConfirm(null);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Error deleting item: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  const handleApproveSubmission = async (submission) => {
+    const newItem = submission.type === 'quote' 
+      ? { type: 'quote', content: submission.content, author: submission.author || '' }
+      : { type: 'image', url: submission.imageUrl, description: submission.content || '' };
+    
+    const updatedCollection = [...collection, newItem];
+    setCollection(updatedCollection);
+    await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
+    
+    // Remove from submissions
+    const updatedSubmissions = submissions.filter(s => s.id !== submission.id);
+    setSubmissions(updatedSubmissions);
+    await window.storage.set('submissions', JSON.stringify(updatedSubmissions));
+  };
+
+  const handleRejectSubmission = async (submissionId) => {
+    const updatedSubmissions = submissions.filter(s => s.id !== submissionId);
+    setSubmissions(updatedSubmissions);
+    await window.storage.set('submissions', JSON.stringify(updatedSubmissions));
+  };
+
+  const handleAddNew = async (newItem) => {
+    const itemWithId = {
+      ...newItem,
+      _id: `item_${Date.now()}_${Math.random()}`
+    };
+    const updatedCollection = [...collection, itemWithId];
+    setCollection(updatedCollection);
+    await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
+    setEditingItem(null);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 5000000) { // 5MB limit
+      alert('Image too large. Please use an image under 5MB.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target.result;
+      setImagePreview(base64);
+      setEditingItem({ ...editingItem, imageData: base64 });
+    };
+    reader.readAsDataURL(file);
+    setImageFile(file);
+  };
+
+  const handleBulkImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    setLoading(true);
+    const processedImages = [];
+    
+    for (const file of files) {
+      if (file.size > 5000000) {
+        console.warn(`Skipping ${file.name} - file too large`);
+        continue;
+      }
+      
+      try {
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        
+        processedImages.push({
+          imageData: base64,
+          description: file.name.replace(/\.[^/.]+$/, ''), // filename without extension
+          preview: base64
+        });
+      } catch (error) {
+        console.error(`Error processing ${file.name}:`, error);
+      }
+    }
+    
+    setBulkImages(processedImages);
+    setLoading(false);
+  };
+
+  const handleSaveBulkImages = async () => {
+    setLoading(true);
+    try {
+      const newImages = bulkImages.map((img, idx) => ({
+        type: 'image',
+        imageData: img.imageData,
+        description: img.description,
+        _id: `item_${Date.now()}_${idx}`
+      }));
+      
+      const updatedCollection = [...collection, ...newImages];
+      setCollection(updatedCollection);
+      await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
+      
+      alert(`Successfully added ${newImages.length} images!`);
+      setBulkUploadMode(false);
+      setBulkImages([]);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error saving bulk images:', error);
+      alert('Error saving images: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  const handleEditItem = async (itemId, updatedItem) => {
+    const updatedCollection = collection.map(item => 
+      item._id === itemId ? { ...updatedItem, _id: itemId } : item
+    );
+    setCollection(updatedCollection);
+    await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
+    setEditingItem(null);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const handleResetCollection = async () => {
+    setLoading(true);
+    try {
+      // Get quotes that are in initialCollection but not in current collection
+      const existingContents = new Set(
+        collection
+          .filter(item => item.type === 'quote')
+          .map(item => `${item.content}|||${item.author || ''}`)
+      );
+      
+      const newQuotes = initialCollection.filter(initItem => {
+        const key = `${initItem.content}|||${initItem.author || ''}`;
+        return !existingContents.has(key);
+      });
+      
+      // Add IDs to new quotes
+      const newQuotesWithIds = newQuotes.map((item, idx) => ({
+        ...item,
+        _id: `item_${Date.now()}_${idx}`
+      }));
+      
+      // Merge with existing collection
+      const mergedCollection = [...collection, ...newQuotesWithIds];
+      
+      await window.storage.set('inspiration-collection', JSON.stringify(mergedCollection));
+      setCollection(mergedCollection);
+      setLoading(false);
+      
+      if (newQuotesWithIds.length > 0) {
+        alert(`Added ${newQuotesWithIds.length} missing quotes from original collection! Total: ${mergedCollection.length} items.`);
+      } else {
+        alert('No new quotes to add - your collection already contains all original items!');
+      }
+    } catch (error) {
+      console.error('Error merging collection:', error);
+      alert('Error merging collection: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  const handleForceReload = async () => {
+    if (!window.confirm('This will REPLACE your entire collection with the updated original (you will lose any custom additions or edits). Are you sure?')) {
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const collectionWithIds = initialCollection.map((item, idx) => ({
+        ...item,
+        _id: `item_${Date.now()}_${idx}`
+      }));
+      await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
+      setCollection(collectionWithIds);
+      setLoading(false);
+      alert(`Collection completely reloaded! Now contains ${collectionWithIds.length} items.`);
+    } catch (error) {
+      console.error('Error reloading collection:', error);
+      alert('Error reloading collection: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  const filteredCollection = collection.filter(item => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    if (item.type === 'quote') {
+      return item.content.toLowerCase().includes(search) || 
+             (item.author && item.author.toLowerCase().includes(search));
+    }
+    return item.description && item.description.toLowerCase().includes(search);
+  });
+
+  const handleSubmit = async () => {
+    if (submitForm.type === 'quote' && !submitForm.content) {
+      setSubmitStatus('error');
+      return;
+    }
+    if (submitForm.type === 'image' && !submitForm.imageUrl) {
+      setSubmitStatus('error');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const result = await window.storage.get('submissions');
+      const submissions = result ? JSON.parse(result.value) : [];
+      
+      const newSubmission = {
+        id: Date.now(),
+        ...submitForm,
+        timestamp: new Date().toISOString()
+      };
+      
+      submissions.push(newSubmission);
+      await window.storage.set('submissions', JSON.stringify(submissions));
+      
+      setSubmitStatus('success');
+      setSubmitForm({
+        type: 'quote',
+        content: '',
+        author: '',
+        imageUrl: '',
+        submittedBy: ''
+      });
+      
+      setTimeout(() => {
+        setSubmitStatus('');
+        setLoading(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting:', error);
+      setSubmitStatus('error');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      fontFamily: "'IBM Plex Mono', monospace",
+      minHeight: '100vh',
+      background: '#fafafa',
+      position: 'relative'
+    }}>
+      {/* Navigation */}
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        background: '#fff',
+        borderBottom: '2px solid #000',
+        padding: '24px 32px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        zIndex: 100
+      }}>
+        <div style={{
+          fontSize: '14px',
+          fontWeight: '600',
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase'
+        }}>
+          Strategy Inspiration
+        </div>
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <button
+            onClick={() => setView('generate')}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '13px',
+              fontFamily: "'IBM Plex Mono', monospace",
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              fontWeight: view === 'generate' ? '600' : '400',
+              textDecoration: view === 'generate' ? 'underline' : 'none',
+              textUnderlineOffset: '4px'
+            }}
+          >
+            Generate
+          </button>
+          <button
+            onClick={() => setView('submit')}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '13px',
+              fontFamily: "'IBM Plex Mono', monospace",
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              fontWeight: view === 'submit' ? '600' : '400',
+              textDecoration: view === 'submit' ? 'underline' : 'none',
+              textUnderlineOffset: '4px'
+            }}
+          >
+            Submit
+          </button>
+          <button
+            onClick={() => {
+              setView('admin');
+              if (!isAuthenticated) setPassword('');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '13px',
+              fontFamily: "'IBM Plex Mono', monospace",
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              fontWeight: view === 'admin' ? '600' : '400',
+              textDecoration: view === 'admin' ? 'underline' : 'none',
+              textUnderlineOffset: '4px'
+            }}
+          >
+            Manage
+          </button>
+        </div>
+      </nav>
+
+      {/* Generate View */}
+      {view === 'generate' && (
+        <div style={{
+          paddingTop: '100px',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '100px 32px 32px'
+        }}>
+          {!currentItem && !loading && (
+            <div style={{
+              textAlign: 'center',
+              maxWidth: '600px'
+            }}>
+              <Lightbulb size={64} strokeWidth={1.5} style={{ marginBottom: '32px' }} />
+              <h1 style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                marginBottom: '16px',
+                letterSpacing: '-0.5px'
+              }}>
+                Generate Random Inspiration
+              </h1>
+              <p style={{
+                fontSize: '14px',
+                lineHeight: '1.6',
+                color: '#666',
+                marginBottom: '24px'
+              }}>
+                Click the button below to pull a random quote or image from the collection
+              </p>
+              
+              {/* Filter Options */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center',
+                marginBottom: '40px'
+              }}>
+                <button
+                  onClick={() => setGenerateFilter('all')}
+                  style={{
+                    background: generateFilter === 'all' ? '#000' : '#fff',
+                    color: generateFilter === 'all' ? '#fff' : '#000',
+                    border: '2px solid #000',
+                    padding: '8px 16px',
+                    fontSize: '12px',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontWeight: '600'
+                  }}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setGenerateFilter('quote')}
+                  style={{
+                    background: generateFilter === 'quote' ? '#000' : '#fff',
+                    color: generateFilter === 'quote' ? '#fff' : '#000',
+                    border: '2px solid #000',
+                    padding: '8px 16px',
+                    fontSize: '12px',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontWeight: '600'
+                  }}
+                >
+                  Quotes Only
+                </button>
+                <button
+                  onClick={() => setGenerateFilter('image')}
+                  style={{
+                    background: generateFilter === 'image' ? '#000' : '#fff',
+                    color: generateFilter === 'image' ? '#fff' : '#000',
+                    border: '2px solid #000',
+                    padding: '8px 16px',
+                    fontSize: '12px',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontWeight: '600'
+                  }}
+                >
+                  Images Only
+                </button>
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div style={{
+              fontSize: '14px',
+              color: '#666',
+              letterSpacing: '1px'
+            }}>
+              LOADING...
+            </div>
+          )}
+
+          {currentItem && !loading && (
+            <div style={{
+              width: '100%',
+              maxWidth: '900px',
+              animation: 'fadeIn 0.5s ease-in'
+            }}>
+              {currentItem.type === 'quote' ? (
+                <div style={{
+                  background: '#fff',
+                  border: '2px solid #000',
+                  padding: '64px 48px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '28px',
+                    lineHeight: '1.5',
+                    marginBottom: '32px',
+                    fontWeight: '400'
+                  }}>
+                    "{currentItem.content}"
+                  </div>
+                  {currentItem.author && (
+                    <div style={{
+                      fontSize: '14px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      color: '#666'
+                    }}>
+                      — {currentItem.author}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{
+                  background: '#fff',
+                  border: '2px solid #000',
+                  overflow: 'hidden'
+                }}>
+                  {currentItem.imageData ? (
+                    <img 
+                      src={currentItem.imageData} 
+                      alt={currentItem.description || 'Inspiration image'}
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        display: 'block'
+                      }}
+                    />
+                  ) : currentItem.url ? (
+                    <img 
+                      src={currentItem.url} 
+                      alt={currentItem.description || 'Inspiration image'}
+                      onError={(e) => {
+                        console.error('Image failed to load:', currentItem.url);
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = `
+                          <div style="padding: 48px; text-align: center;">
+                            <div style="font-size: 14px; margin-bottom: 16px; color: #666;">
+                              IMAGE FAILED TO LOAD
+                            </div>
+                            <div style="font-size: 12px; color: #999; word-break: break-all;">
+                              ${currentItem.url}
+                            </div>
+                          </div>
+                        `;
+                      }}
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        display: 'block'
+                      }}
+                    />
+                  ) : (
+                    <div style={{ padding: '48px', textAlign: 'center', color: '#666' }}>
+                      No image data
+                    </div>
+                  )}
+                  {currentItem.description && (
+                    <div style={{
+                      padding: '24px',
+                      fontSize: '13px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      borderTop: '2px solid #000'
+                    }}>
+                      {currentItem.description}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={generateRandom}
+            disabled={loading}
+            style={{
+              marginTop: '48px',
+              background: '#000',
+              color: '#fff',
+              border: 'none',
+              padding: '16px 48px',
+              fontSize: '14px',
+              fontFamily: "'IBM Plex Mono', monospace",
+              cursor: loading ? 'not-allowed' : 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              fontWeight: '600',
+              transition: 'transform 0.2s',
+              opacity: loading ? 0.6 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'scale(1)';
+            }}
+          >
+            {currentItem ? 'Generate Another' : 'Generate'}
+          </button>
+        </div>
+      )}
+
+      {/* Submit View */}
+      {view === 'submit' && (
+        <div style={{
+          paddingTop: '100px',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '100px 32px 64px',
+          maxWidth: '700px',
+          margin: '0 auto'
+        }}>
+          <div style={{
+            width: '100%',
+            background: '#fff',
+            border: '2px solid #000',
+            padding: '48px'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              marginBottom: '8px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              Submit Material
+            </h2>
+            <p style={{
+              fontSize: '13px',
+              color: '#666',
+              marginBottom: '32px',
+              lineHeight: '1.6'
+            }}>
+              Contribute a quote or image to the collection. Submissions will be reviewed before being added.
+            </p>
+
+            <div>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: '8px',
+                  fontWeight: '600'
+                }}>
+                  Type
+                </label>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      value="quote"
+                      checked={submitForm.type === 'quote'}
+                      onChange={(e) => setSubmitForm({ ...submitForm, type: e.target.value })}
+                    />
+                    <span style={{ fontSize: '13px' }}>Quote</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      value="image"
+                      checked={submitForm.type === 'image'}
+                      onChange={(e) => setSubmitForm({ ...submitForm, type: e.target.value })}
+                    />
+                    <span style={{ fontSize: '13px' }}>Image</span>
+                  </label>
+                </div>
+              </div>
+
+              {submitForm.type === 'quote' ? (
+                <>
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: '8px',
+                      fontWeight: '600'
+                    }}>
+                      Quote *
+                    </label>
+                    <textarea
+                      value={submitForm.content}
+                      onChange={(e) => setSubmitForm({ ...submitForm, content: e.target.value })}
+                      rows={4}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: '13px',
+                        border: '2px solid #000',
+                        background: '#fafafa',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: '8px',
+                      fontWeight: '600'
+                    }}>
+                      Author
+                    </label>
+                    <input
+                      type="text"
+                      value={submitForm.author}
+                      onChange={(e) => setSubmitForm({ ...submitForm, author: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: '13px',
+                        border: '2px solid #000',
+                        background: '#fafafa'
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '8px',
+                    fontWeight: '600'
+                  }}>
+                    Image URL *
+                  </label>
+                  <input
+                    type="url"
+                    value={submitForm.imageUrl}
+                    onChange={(e) => setSubmitForm({ ...submitForm, imageUrl: e.target.value })}
+                    placeholder="https://..."
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: '13px',
+                      border: '2px solid #000',
+                      background: '#fafafa'
+                    }}
+                  />
+                </div>
+              )}
+
+              <div style={{ marginBottom: '32px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: '8px',
+                  fontWeight: '600'
+                }}>
+                  Your Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={submitForm.submittedBy}
+                  onChange={(e) => setSubmitForm({ ...submitForm, submittedBy: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '13px',
+                    border: '2px solid #000',
+                    background: '#fafafa'
+                  }}
+                />
+              </div>
+
+              {submitStatus === 'success' && (
+                <div style={{
+                  background: '#000',
+                  color: '#fff',
+                  padding: '16px',
+                  marginBottom: '24px',
+                  fontSize: '13px',
+                  textAlign: 'center',
+                  letterSpacing: '0.5px'
+                }}>
+                  SUBMITTED SUCCESSFULLY
+                </div>
+              )}
+
+              {submitStatus === 'error' && (
+                <div style={{
+                  background: '#ff0000',
+                  color: '#fff',
+                  padding: '16px',
+                  marginBottom: '24px',
+                  fontSize: '13px',
+                  textAlign: 'center',
+                  letterSpacing: '0.5px'
+                }}>
+                  ERROR: PLEASE FILL REQUIRED FIELDS
+                </div>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  background: '#000',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '16px',
+                  fontSize: '13px',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: loading ? 0.6 : 1
+                }}
+              >
+                <Send size={16} />
+                Submit for Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin View */}
+      {view === 'admin' && (
+        <div style={{
+          paddingTop: '100px',
+          minHeight: '100vh',
+          padding: '100px 32px 64px',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          {!isAuthenticated ? (
+            <div style={{
+              maxWidth: '500px',
+              margin: '0 auto',
+              background: '#fff',
+              border: '2px solid #000',
+              padding: '48px'
+            }}>
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                marginBottom: '24px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Admin Login
+              </h2>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                placeholder="Enter password"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: '13px',
+                  border: '2px solid #000',
+                  background: '#fafafa',
+                  marginBottom: '16px'
+                }}
+              />
+              <button
+                onClick={handleLogin}
+                style={{
+                  width: '100%',
+                  background: '#000',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '16px',
+                  fontSize: '13px',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '600'
+                }}
+              >
+                Login
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '32px',
+                gap: '16px',
+                flexWrap: 'wrap'
+              }}>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  Manage Collection ({collection.length} items)
+                </h2>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search..."
+                    style={{
+                      padding: '8px 12px',
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: '13px',
+                      border: '2px solid #000',
+                      background: '#fafafa'
+                    }}
+                  />
+                  <button
+                    onClick={handleResetCollection}
+                    disabled={loading}
+                    style={{
+                      background: '#666',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '12px',
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontWeight: '600',
+                      opacity: loading ? 0.6 : 1
+                    }}
+                  >
+                    Merge Original
+                  </button>
+                  <button
+                    onClick={handleForceReload}
+                    disabled={loading}
+                    style={{
+                      background: '#ff6600',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '12px',
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontWeight: '600',
+                      opacity: loading ? 0.6 : 1
+                    }}
+                  >
+                    Force Reload
+                  </button>
+                  <button
+                    onClick={() => setEditingItem({ type: 'quote', content: '', author: '', isNew: true })}
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '12px',
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    + Add New
+                  </button>
+                  <button
+                    onClick={() => setBulkUploadMode(true)}
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '12px',
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    + Bulk Upload Images
+                  </button>
+                </div>
+              </div>
+
+              {/* Submissions Section */}
+              {submissions.length > 0 && (
+                <div style={{ marginBottom: '48px' }}>
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    marginBottom: '16px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    Pending Submissions ({submissions.length})
+                  </h3>
+                  {submissions.map((sub) => (
+                    <div key={sub.id} style={{
+                      background: '#fff',
+                      border: '2px solid #000',
+                      padding: '24px',
+                      marginBottom: '16px'
+                    }}>
+                      <div style={{ marginBottom: '16px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          color: '#666'
+                        }}>
+                          {sub.type} • Submitted by {sub.submittedBy || 'Anonymous'}
+                        </span>
+                      </div>
+                      {sub.type === 'quote' ? (
+                        <>
+                          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+                            "{sub.content}"
+                          </div>
+                          {sub.author && (
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              — {sub.author}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div style={{ fontSize: '14px' }}>
+                          Image: {sub.imageUrl}
+                        </div>
+                      )}
+                      <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
+                        <button
+                          onClick={() => handleApproveSubmission(sub)}
+                          style={{
+                            background: '#000',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '8px 16px',
+                            fontSize: '11px',
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            cursor: 'pointer',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectSubmission(sub.id)}
+                          style={{
+                            background: '#fff',
+                            color: '#000',
+                            border: '2px solid #000',
+                            padding: '8px 16px',
+                            fontSize: '11px',
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            cursor: 'pointer',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Bulk Upload Modal */}
+              {bulkUploadMode && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(0,0,0,0.8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000,
+                  padding: '32px'
+                }}>
+                  <div style={{
+                    background: '#fff',
+                    border: '2px solid #000',
+                    padding: '48px',
+                    maxWidth: '800px',
+                    width: '100%',
+                    maxHeight: '80vh',
+                    overflow: 'auto'
+                  }}>
+                    <h3 style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      marginBottom: '24px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      Bulk Upload Images
+                    </h3>
+                    
+                    {bulkImages.length === 0 ? (
+                      <>
+                        <p style={{
+                          fontSize: '13px',
+                          marginBottom: '24px',
+                          lineHeight: '1.6',
+                          color: '#666'
+                        }}>
+                          Select multiple images to upload at once. Each image must be under 5MB.
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleBulkImageUpload}
+                          disabled={loading}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: '13px',
+                            border: '2px solid #000',
+                            background: '#fafafa',
+                            marginBottom: '24px'
+                          }}
+                        />
+                        {loading && (
+                          <div style={{
+                            fontSize: '13px',
+                            color: '#666',
+                            textAlign: 'center',
+                            padding: '24px'
+                          }}>
+                            Processing images...
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p style={{
+                          fontSize: '13px',
+                          marginBottom: '24px',
+                          color: '#666'
+                        }}>
+                          {bulkImages.length} images ready to upload. You can edit descriptions below.
+                        </p>
+                        <div style={{
+                          maxHeight: '400px',
+                          overflow: 'auto',
+                          marginBottom: '24px'
+                        }}>
+                          {bulkImages.map((img, idx) => (
+                            <div key={idx} style={{
+                              border: '2px solid #000',
+                              padding: '16px',
+                              marginBottom: '16px',
+                              display: 'flex',
+                              gap: '16px',
+                              alignItems: 'flex-start'
+                            }}>
+                              <img 
+                                src={img.preview} 
+                                alt={`Preview ${idx + 1}`}
+                                style={{
+                                  width: '100px',
+                                  height: '100px',
+                                  objectFit: 'cover',
+                                  border: '1px solid #ccc'
+                                }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '11px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
+                                  marginBottom: '8px',
+                                  fontWeight: '600'
+                                }}>
+                                  Description
+                                </label>
+                                <input
+                                  type="text"
+                                  value={img.description}
+                                  onChange={(e) => {
+                                    const updated = [...bulkImages];
+                                    updated[idx].description = e.target.value;
+                                    setBulkImages(updated);
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px',
+                                    fontFamily: "'IBM Plex Mono', monospace",
+                                    fontSize: '12px',
+                                    border: '2px solid #000',
+                                    background: '#fafafa'
+                                  }}
+                                />
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const updated = bulkImages.filter((_, i) => i !== idx);
+                                  setBulkImages(updated);
+                                }}
+                                style={{
+                                  background: '#ff0000',
+                                  color: '#fff',
+                                  border: 'none',
+                                  padding: '8px 12px',
+                                  fontSize: '11px',
+                                  fontFamily: "'IBM Plex Mono', monospace",
+                                  cursor: 'pointer',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      {bulkImages.length > 0 && (
+                        <button
+                          onClick={handleSaveBulkImages}
+                          disabled={loading}
+                          style={{
+                            flex: 1,
+                            background: '#000',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '16px',
+                            fontSize: '13px',
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                            fontWeight: '600',
+                            opacity: loading ? 0.6 : 1
+                          }}
+                        >
+                          {loading ? 'Uploading...' : `Upload ${bulkImages.length} Images`}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setBulkUploadMode(false);
+                          setBulkImages([]);
+                        }}
+                        disabled={loading}
+                        style={{
+                          flex: 1,
+                          background: '#fff',
+                          color: '#000',
+                          border: '2px solid #000',
+                          padding: '16px',
+                          fontSize: '13px',
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Delete Confirmation Modal */}
+              {deleteConfirm && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(0,0,0,0.8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000,
+                  padding: '32px'
+                }}>
+                  <div style={{
+                    background: '#fff',
+                    border: '2px solid #000',
+                    padding: '48px',
+                    maxWidth: '500px',
+                    width: '100%'
+                  }}>
+                    <h3 style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      marginBottom: '16px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      Confirm Delete
+                    </h3>
+                    <p style={{
+                      fontSize: '14px',
+                      marginBottom: '32px',
+                      lineHeight: '1.6'
+                    }}>
+                      Are you sure you want to delete this item? This action cannot be undone.
+                    </p>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        onClick={() => handleDeleteItem(deleteConfirm)}
+                        disabled={loading}
+                        style={{
+                          flex: 1,
+                          background: '#ff0000',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '16px',
+                          fontSize: '13px',
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          fontWeight: '600',
+                          opacity: loading ? 0.6 : 1
+                        }}
+                      >
+                        {loading ? 'Deleting...' : 'Delete'}
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(null)}
+                        disabled={loading}
+                        style={{
+                          flex: 1,
+                          background: '#fff',
+                          color: '#000',
+                          border: '2px solid #000',
+                          padding: '16px',
+                          fontSize: '13px',
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit/Add Modal */}
+              {editingItem && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(0,0,0,0.8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000,
+                  padding: '32px'
+                }}>
+                  <div style={{
+                    background: '#fff',
+                    border: '2px solid #000',
+                    padding: '48px',
+                    maxWidth: '600px',
+                    width: '100%',
+                    maxHeight: '80vh',
+                    overflow: 'auto'
+                  }}>
+                    <h3 style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      marginBottom: '24px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {editingItem.isNew ? 'Add New Item' : 'Edit Item'}
+                    </h3>
+                    
+                    <div style={{ marginBottom: '24px' }}>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: '8px',
+                        fontWeight: '600'
+                      }}>
+                        Type
+                      </label>
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <input
+                            type="radio"
+                            checked={editingItem.type === 'quote'}
+                            onChange={() => setEditingItem({ ...editingItem, type: 'quote' })}
+                          />
+                          <span style={{ fontSize: '13px' }}>Quote</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <input
+                            type="radio"
+                            checked={editingItem.type === 'image'}
+                            onChange={() => setEditingItem({ ...editingItem, type: 'image' })}
+                          />
+                          <span style={{ fontSize: '13px' }}>Image</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {editingItem.type === 'quote' ? (
+                      <>
+                        <div style={{ marginBottom: '24px' }}>
+                          <label style={{
+                            display: 'block',
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            marginBottom: '8px',
+                            fontWeight: '600'
+                          }}>
+                            Quote *
+                          </label>
+                          <textarea
+                            value={editingItem.content || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, content: e.target.value })}
+                            rows={4}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: '13px',
+                              border: '2px solid #000',
+                              background: '#fafafa',
+                              resize: 'vertical'
+                            }}
+                          />
+                        </div>
+                        <div style={{ marginBottom: '24px' }}>
+                          <label style={{
+                            display: 'block',
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            marginBottom: '8px',
+                            fontWeight: '600'
+                          }}>
+                            Author
+                          </label>
+                          <input
+                            type="text"
+                            value={editingItem.author || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, author: e.target.value })}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: '13px',
+                              border: '2px solid #000',
+                              background: '#fafafa'
+                            }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ marginBottom: '24px' }}>
+                          <label style={{
+                            display: 'block',
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            marginBottom: '8px',
+                            fontWeight: '600'
+                          }}>
+                            Upload Image *
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: '13px',
+                              border: '2px solid #000',
+                              background: '#fafafa'
+                            }}
+                          />
+                          <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
+                            Maximum file size: 5MB. Supports JPG, PNG, GIF.
+                          </div>
+                        </div>
+                        
+                        {(imagePreview || editingItem.imageData) && (
+                          <div style={{ marginBottom: '24px' }}>
+                            <label style={{
+                              display: 'block',
+                              fontSize: '12px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              marginBottom: '8px',
+                              fontWeight: '600'
+                            }}>
+                              Preview
+                            </label>
+                            <img 
+                              src={imagePreview || editingItem.imageData} 
+                              alt="Preview"
+                              style={{
+                                width: '100%',
+                                maxHeight: '300px',
+                                objectFit: 'contain',
+                                border: '2px solid #000',
+                                background: '#fafafa'
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        <div style={{ marginBottom: '24px' }}>
+                          <label style={{
+                            display: 'block',
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            marginBottom: '8px',
+                            fontWeight: '600'
+                          }}>
+                            Description (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={editingItem.description || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: '13px',
+                              border: '2px solid #000',
+                              background: '#fafafa'
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        onClick={() => {
+                          // Validate before saving
+                          if (editingItem.type === 'quote' && !editingItem.content) {
+                            alert('Please enter quote content');
+                            return;
+                          }
+                          if (editingItem.type === 'image' && !editingItem.imageData && !editingItem.url) {
+                            alert('Please upload an image');
+                            return;
+                          }
+                          
+                          if (editingItem.isNew) {
+                            const { isNew, ...newItem } = editingItem;
+                            handleAddNew(newItem);
+                          } else {
+                            handleEditItem(editingItem._id, editingItem);
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          background: '#000',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '16px',
+                          fontSize: '13px',
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          cursor: 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingItem(null);
+                          setImageFile(null);
+                          setImagePreview(null);
+                        }}
+                        style={{
+                          flex: 1,
+                          background: '#fff',
+                          color: '#000',
+                          border: '2px solid #000',
+                          padding: '16px',
+                          fontSize: '13px',
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          cursor: 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Collection List */}
+              <div>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  marginBottom: '16px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  Current Collection
+                </h3>
+                {filteredCollection.map((item) => {
+                  return (
+                  <div key={item._id} style={{
+                    background: '#fff',
+                    border: '2px solid #000',
+                    padding: '24px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: '16px'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          color: '#666'
+                        }}>
+                          {item.type}
+                        </span>
+                      </div>
+                      {item.type === 'quote' ? (
+                        <>
+                          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+                            "{item.content}"
+                          </div>
+                          {item.author && (
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              — {item.author}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+                            {item.description || 'Image'}
+                          </div>
+                          {item.imageData && (
+                            <img 
+                              src={item.imageData} 
+                              alt={item.description || 'Preview'}
+                              style={{
+                                maxWidth: '200px',
+                                maxHeight: '150px',
+                                objectFit: 'contain',
+                                marginTop: '8px',
+                                border: '1px solid #ccc'
+                              }}
+                            />
+                          )}
+                          {item.url && !item.imageData && (
+                            <div style={{ fontSize: '12px', color: '#666', wordBreak: 'break-all' }}>
+                              {item.url}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                      <button
+                        onClick={() => {
+                          setEditingItem({ ...item });
+                        }}
+                        style={{
+                          background: '#fff',
+                          color: '#000',
+                          border: '2px solid #000',
+                          padding: '6px 12px',
+                          fontSize: '11px',
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          cursor: 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          console.log('Delete button clicked for item:', item._id);
+                          setDeleteConfirm(item._id);
+                        }}
+                        disabled={loading}
+                        style={{
+                          background: '#ff0000',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '6px 12px',
+                          fontSize: '11px',
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          opacity: loading ? 0.6 : 1
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap');
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default InspirationGenerator;
