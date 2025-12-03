@@ -1,1564 +1,411 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Strategy Inspiration Generator</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      --bg-primary: #fafaf8;
-      --bg-secondary: #f0f0ec;
-      --text-primary: #1a1a1a;
-      --text-secondary: #666666;
-      --accent: #2d2d2d;
-      --accent-hover: #000000;
-      --border: #e0e0dc;
-      --success: #2d5a3d;
-      --error: #8b3a3a;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      height: 100%;
-    }
-
-    body {
-      font-family: 'IBM Plex Mono', monospace;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
-      min-height: 100vh;
-    }
-
-    .app-container {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Navigation */
-    .nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.5rem 3rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-primary);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .nav-logo {
-      height: 40px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
-
-    .nav-logo img {
-      height: 100%;
-      width: auto;
-    }
-
-    .nav-logo-text {
-      font-size: 1.1rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-
-    .nav-menu {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
-
-    .nav-menu a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      transition: color 0.2s ease;
-    }
-
-    .nav-menu a:hover {
-      color: var(--text-primary);
-    }
-
-    .nav-menu a.active {
-      color: var(--text-primary);
-    }
-
-    /* Main Content */
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem 3rem;
-      max-width: 900px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    /* Intro Section */
-    .intro-section {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-
-    .intro-text {
-      font-size: 1.1rem;
-      line-height: 1.8;
-      color: var(--text-secondary);
-      max-width: 600px;
-    }
-
-    /* Generate Button */
-    .generate-btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 1.25rem 3rem;
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .generate-btn:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }
-
-    .generate-btn:active {
-      transform: translateY(0);
-    }
-
-    .generate-btn.loading {
-      pointer-events: none;
-      opacity: 0.7;
-    }
-
-    /* Content Display */
-    .content-display {
-      width: 100%;
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.5s ease;
-      margin-bottom: 2rem;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .quote-display {
-      text-align: center;
-      max-width: 700px;
-    }
-
-    .quote-text {
-      font-size: 1.5rem;
-      line-height: 1.7;
-      font-weight: 400;
-      margin-bottom: 1.5rem;
-      position: relative;
-      padding-left: 2rem;
-    }
-
-    .quote-text::before {
-      content: '"';
-      font-size: 4rem;
-      position: absolute;
-      top: -1.5rem;
-      left: -1rem;
-      color: var(--border);
-      font-family: Georgia, serif;
-    }
-
-    .quote-author {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    .image-display {
-      max-width: 100%;
-      text-align: center;
-    }
-
-    .image-display img {
-      max-width: 100%;
-      max-height: 500px;
-      object-fit: contain;
-      border: 1px solid var(--border);
-    }
-
-    .image-caption {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    /* Modal Overlay */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 2rem;
-    }
-
-    .modal {
-      background: var(--bg-primary);
-      max-width: 600px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 2.5rem;
-      position: relative;
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text-secondary);
-      padding: 0.5rem;
-      line-height: 1;
-    }
-
-    .modal-close:hover {
-      color: var(--text-primary);
-    }
-
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    /* Forms */
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-      color: var(--text-secondary);
-    }
-
-    .form-input,
-    .form-textarea,
-    .form-select {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      font-family: inherit;
-      font-size: 0.95rem;
-      border: 1px solid var(--border);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      transition: border-color 0.2s ease;
-    }
-
-    .form-input:focus,
-    .form-textarea:focus,
-    .form-select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .form-textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    .form-radio-group {
-      display: flex;
-      gap: 1.5rem;
-    }
-
-    .form-radio-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .form-submit {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      width: 100%;
-    }
-
-    .form-submit:hover {
-      background: var(--accent-hover);
-    }
-
-    .form-submit:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .form-message {
-      padding: 1rem;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-    }
-
-    .form-message.success {
-      background: rgba(45, 90, 61, 0.1);
-      color: var(--success);
-      border: 1px solid var(--success);
-    }
-
-    .form-message.error {
-      background: rgba(139, 58, 58, 0.1);
-      color: var(--error);
-      border: 1px solid var(--error);
-    }
-
-    /* Image Upload */
-    .image-upload-area {
-      border: 2px dashed var(--border);
-      padding: 2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s ease;
-    }
-
-    .image-upload-area:hover {
-      border-color: var(--accent);
-    }
-
-    .image-upload-area.has-image {
-      border-style: solid;
-      padding: 1rem;
-    }
-
-    .image-preview {
-      max-width: 100%;
-      max-height: 200px;
-      object-fit: contain;
-    }
-
-    .image-upload-text {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-    }
-
-    /* Manage Page */
-    .manage-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem 3rem;
-      width: 100%;
-    }
-
-    .manage-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .manage-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .manage-tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .manage-tab {
-      padding: 0.75rem 1.5rem;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      font-family: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .manage-tab.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .content-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      padding: 1.5rem;
-      position: relative;
-    }
-
-    .content-card-type {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-secondary);
-      margin-bottom: 0.75rem;
-    }
-
-    .content-card-text {
-      font-size: 0.95rem;
-      line-height: 1.6;
-      margin-bottom: 0.5rem;
-    }
-
-    .content-card-author {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    .content-card-image {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      margin-bottom: 0.75rem;
-    }
-
-    .content-card-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .content-tag {
-      font-size: 0.7rem;
-      padding: 0.25rem 0.5rem;
-      background: var(--bg-primary);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-    }
-
-    .content-card-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .card-btn {
-      flex: 1;
-      padding: 0.5rem;
-      font-family: inherit;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border: 1px solid var(--border);
-      background: var(--bg-primary);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .card-btn:hover {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .card-btn.danger:hover {
-      background: var(--error);
-      border-color: var(--error);
-    }
-
-    .card-btn.success:hover {
-      background: var(--success);
-      border-color: var(--success);
-    }
-
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: var(--text-secondary);
-    }
-
-    .empty-state p {
-      margin-bottom: 1rem;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .nav {
-        padding: 1rem 1.5rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-      }
-
-      .nav-menu {
-        gap: 1rem;
-      }
-
-      .nav-menu a {
-        font-size: 0.75rem;
-      }
-
-      .main-content {
-        padding: 2rem 1.5rem;
-      }
-
-      .quote-text {
-        font-size: 1.2rem;
-        padding-left: 1.5rem;
-      }
-
-      .quote-text::before {
-        font-size: 3rem;
-        top: -1rem;
-        left: -0.5rem;
-      }
-
-      .manage-container {
-        padding: 1.5rem;
-      }
-
-      .content-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-      margin-right: 0.5rem;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Data export notice */
-    .data-notice {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.85rem;
-    }
-
-    .data-notice-title {
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .data-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-
-    .data-btn {
-      padding: 0.5rem 1rem;
-      font-family: inherit;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border: 1px solid var(--border);
-      background: var(--bg-primary);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .data-btn:hover {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-  </style>
+<!-- saved from url=(0020)https://scrap.cards/ -->
+<html lang="en" data-nm-theme="light"><nativemind-container data-wxt-shadow-root="" data-testid="nativemind-container" style="overflow: visible; position: fixed; width: 0px; height: 0px; display: block; top: 0px; left: 0px; z-index: calc(infinity);"><template shadowrootmode="open">
+<!-- saved from url=(0020)https://scrap.cards/ -->
+<html style="position: absolute; top: 0px; left: 0px;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style>/* WXT Shadow Root Reset */ body{all:initial;}</style></head><body><div class="font-inter nativemind-style-boundary" data-v-app=""><div><template shadowrootmode="open"><div class="nativemind-writing-tools nativemind-style-boundary" style="color-scheme: initial; forced-color-adjust: initial; mask: initial; math-depth: initial; position: fixed; position-anchor: initial; text-size-adjust: initial; appearance: initial; color: initial; font: initial; font-palette: initial; font-synthesis: initial; position-area: initial; text-orientation: initial; text-rendering: initial; text-spacing-trim: initial; -webkit-font-smoothing: initial; -webkit-locale: initial; -webkit-text-orientation: initial; -webkit-writing-mode: initial; writing-mode: initial; zoom: initial; accent-color: initial; place-content: initial; place-items: initial; place-self: initial; alignment-baseline: initial; anchor-name: initial; anchor-scope: initial; animation-composition: initial; animation: initial; app-region: initial; aspect-ratio: initial; backdrop-filter: initial; backface-visibility: initial; background: initial; background-blend-mode: initial; baseline-shift: initial; baseline-source: initial; block-size: initial; border-block: initial; border: initial; border-radius: initial; border-collapse: initial; border-end-end-radius: initial; border-end-start-radius: initial; border-inline: initial; border-start-end-radius: initial; border-start-start-radius: initial; bottom: initial; box-decoration-break: initial; box-shadow: initial; box-sizing: initial; break-after: initial; break-before: initial; break-inside: initial; buffered-rendering: initial; caption-side: initial; caret-animation: initial; caret-color: initial; clear: initial; clip: initial; clip-path: initial; clip-rule: initial; color-interpolation: initial; color-interpolation-filters: initial; color-rendering: initial; color-interpolation-filters: initial; color-rendering: initial; columns: initial; column-fill: initial; gap: initial; column-rule: initial; column-span: initial; contain: initial; contain-intrinsic-block-size: initial; contain-intrinsic-size: initial; contain-intrinsic-inline-size: initial; container: initial; content: initial; content-visibility: initial; corner-shape: initial; corner-block-end-shape: initial; corner-block-start-shape: initial; counter-increment: initial; counter-reset: initial; counter-set: initial; cursor: initial; cx: initial; cy: initial; d: initial; display: initial; dominant-baseline: initial; dynamic-range-limit: initial; empty-cells: initial; field-sizing: initial; fill: initial; fill-opacity: initial; fill-rule: initial; filter: initial; flex: initial; flex-flow: initial; float: initial; flood-color: initial; flood-opacity: initial; grid: initial; grid-area: initial; height: 0px; hyphenate-character: initial; hyphenate-limit-chars: initial; hyphens: initial; image-orientation: initial; image-rendering: initial; initial-letter: initial; inline-size: initial; inset-block: initial; inset-inline: initial; interest-delay: initial; interpolate-size: initial; isolation: initial; left: 0px; letter-spacing: initial; lighting-color: initial; line-break: initial; list-style: initial; margin-block: initial; margin: initial; margin-inline: initial; marker: initial; mask-type: initial; math-shift: initial; math-style: initial; max-block-size: initial; max-height: initial; max-inline-size: initial; max-width: initial; min-block-size: initial; min-height: initial; min-inline-size: initial; min-width: initial; mix-blend-mode: initial; object-fit: initial; object-position: initial; object-view-box: initial; offset: initial; opacity: initial; order: initial; orphans: initial; outline: initial; outline-offset: initial; overflow-anchor: initial; overflow-block: initial; overflow-clip-margin: initial; overflow-inline: initial; overflow-wrap: initial; overflow: initial; overlay: initial; overscroll-behavior-block: initial; overscroll-behavior-inline: initial; overscroll-behavior: initial; padding-block: initial; padding: initial; padding-inline: initial; page: initial; page-orientation: initial; paint-order: initial; perspective: initial; perspective-origin: initial; pointer-events: initial; position-try: initial; position-visibility: initial; print-color-adjust: initial; quotes: initial; r: initial; reading-flow: initial; reading-order: initial; resize: initial; right: initial; rotate: initial; ruby-align: initial; ruby-position: initial; rx: initial; ry: initial; scale: initial; scroll-behavior: initial; scroll-initial-target: initial; scroll-margin-block: initial; scroll-margin: initial; scroll-margin-inline: initial; scroll-marker-group: initial; scroll-padding-block: initial; scroll-padding: initial; scroll-padding-inline: initial; scroll-snap-align: initial; scroll-snap-stop: initial; scroll-snap-type: initial; scroll-target-group: initial; scroll-timeline: initial; scrollbar-color: initial; scrollbar-gutter: initial; scrollbar-width: initial; shape-image-threshold: initial; shape-margin: initial; shape-outside: initial; shape-rendering: initial; size: initial; speak: initial; stop-color: initial; stop-opacity: initial; stroke: initial; stroke-dasharray: initial; stroke-dashoffset: initial; stroke-linecap: initial; stroke-linejoin: initial; stroke-miterlimit: initial; stroke-opacity: initial; stroke-width: initial; tab-size: initial; table-layout: initial; text-align: initial; text-align-last: initial; text-anchor: initial; text-autospace: initial; text-box: initial; text-combine-upright: initial; text-decoration: initial; text-decoration-skip-ink: initial; text-emphasis: initial; text-emphasis-position: initial; text-indent: initial; text-overflow: initial; text-shadow: initial; text-transform: initial; text-underline-offset: initial; text-underline-position: initial; text-wrap: initial; timeline-scope: initial; top: 0px; touch-action: initial; transform: initial; transform-box: initial; transform-origin: initial; transform-style: initial; transition: initial; translate: initial; user-select: initial; vector-effect: initial; vertical-align: initial; view-timeline: initial; view-transition-class: initial; view-transition-group: initial; view-transition-name: initial; visibility: initial; border-spacing: initial; -webkit-box-align: initial; -webkit-box-decoration-break: initial; -webkit-box-direction: initial; -webkit-box-flex: initial; -webkit-box-ordinal-group: initial; -webkit-box-orient: initial; -webkit-box-pack: initial; -webkit-box-reflect: initial; -webkit-line-break: initial; -webkit-line-clamp: initial; -webkit-mask-box-image: initial; -webkit-rtl-ordering: initial; -webkit-ruby-position: initial; -webkit-tap-highlight-color: initial; -webkit-text-combine: initial; -webkit-text-decorations-in-effect: initial; -webkit-text-fill-color: initial; -webkit-text-security: initial; -webkit-text-stroke: initial; -webkit-user-drag: initial; white-space-collapse: initial; widows: initial; width: 0px; will-change: initial; word-break: initial; word-spacing: initial; x: initial; y: initial; z-index: initial;"><div class="container bg-bg-primary text-text-primary font-inter" data-nm-theme="light"></div></div></template></div><div><template shadowrootmode="open"><div class="nativemind-gmail-tools nativemind-style-boundary" style="color-scheme: initial; forced-color-adjust: initial; mask: initial; math-depth: initial; position: fixed; position-anchor: initial; text-size-adjust: initial; appearance: initial; color: initial; font: initial; font-palette: initial; font-synthesis: initial; position-area: initial; text-orientation: initial; text-rendering: initial; text-spacing-trim: initial; -webkit-font-smoothing: initial; -webkit-locale: initial; -webkit-text-orientation: initial; -webkit-writing-mode: initial; writing-mode: initial; zoom: initial; accent-color: initial; place-content: initial; place-items: initial; place-self: initial; alignment-baseline: initial; anchor-name: initial; anchor-scope: initial; animation-composition: initial; animation: initial; app-region: initial; aspect-ratio: initial; backdrop-filter: initial; backface-visibility: initial; background: initial; background-blend-mode: initial; baseline-shift: initial; baseline-source: initial; block-size: initial; border-block: initial; border: initial; border-radius: initial; border-collapse: initial; border-end-end-radius: initial; border-end-start-radius: initial; border-inline: initial; border-start-end-radius: initial; border-start-start-radius: initial; bottom: initial; box-decoration-break: initial; box-shadow: initial; box-sizing: initial; break-after: initial; break-before: initial; break-inside: initial; buffered-rendering: initial; caption-side: initial; caret-animation: initial; caret-color: initial; clear: initial; clip: initial; clip-path: initial; clip-rule: initial; color-interpolation: initial; color-interpolation-filters: initial; color-rendering: initial; columns: initial; column-fill: initial; gap: initial; column-rule: initial; column-span: initial; contain: initial; contain-intrinsic-block-size: initial; contain-intrinsic-size: initial; contain-intrinsic-inline-size: initial; container: initial; content: initial; content-visibility: initial; corner-shape: initial; corner-block-end-shape: initial; corner-block-start-shape: initial; counter-increment: initial; counter-reset: initial; counter-set: initial; cursor: initial; cx: initial; cy: initial; d: initial; display: initial; dominant-baseline: initial; dynamic-range-limit: initial; empty-cells: initial; field-sizing: initial; fill: initial; fill-opacity: initial; fill-rule: initial; filter: initial; flex: initial; flex-flow: initial; float: initial; flood-color: initial; flood-opacity: initial; grid: initial; grid-area: initial; height: 0px; hyphenate-character: initial; hyphenate-limit-chars: initial; hyphens: initial; image-orientation: initial; image-rendering: initial; initial-letter: initial; inline-size: initial; inset-block: initial; inset-inline: initial; interest-delay: initial; interpolate-size: initial; isolation: initial; left: 0px; letter-spacing: initial; lighting-color: initial; line-break: initial; list-style: initial; margin-block: initial; margin: initial; margin-inline: initial; marker: initial; mask-type: initial; math-shift: initial; math-style: initial; max-block-size: initial; max-height: initial; max-inline-size: initial; max-width: initial; min-block-size: initial; min-height: initial; min-inline-size: initial; min-width: initial; mix-blend-mode: initial; object-fit: initial; object-position: initial; object-view-box: initial; offset: initial; opacity: initial; order: initial; orphans: initial; outline: initial; outline-offset: initial; overflow-anchor: initial; overflow-block: initial; overflow-clip-margin: initial; overflow-inline: initial; overflow-wrap: initial; overflow: initial; overlay: initial; overscroll-behavior-block: initial; overscroll-behavior-inline: initial; overscroll-behavior: initial; padding-block: initial; padding: initial; padding-inline: initial; page: initial; page-orientation: initial; paint-order: initial; perspective: initial; perspective-origin: initial; pointer-events: initial; position-try: initial; position-visibility: initial; print-color-adjust: initial; quotes: initial; r: initial; reading-flow: initial; reading-order: initial; resize: initial; right: initial; rotate: initial; ruby-align: initial; ruby-position: initial; rx: initial; ry: initial; scale: initial; scroll-behavior: initial; scroll-initial-target: initial; scroll-margin-block: initial; scroll-margin: initial; scroll-margin-inline: initial; scroll-marker-group: initial; scroll-padding-block: initial; scroll-padding: initial; scroll-padding-inline: initial; scroll-snap-align: initial; scroll-snap-stop: initial; scroll-snap-type: initial; scroll-target-group: initial; scroll-timeline: initial; scrollbar-color: initial; scrollbar-gutter: initial; scrollbar-width: initial; shape-image-threshold: initial; shape-margin: initial; shape-outside: initial; shape-rendering: initial; size: initial; speak: initial; stop-color: initial; stop-opacity: initial; stroke: initial; stroke-dasharray: initial; stroke-dashoffset: initial; stroke-linecap: initial; stroke-linejoin: initial; stroke-miterlimit: initial; stroke-opacity: initial; stroke-width: initial; tab-size: initial; table-layout: initial; text-align: initial; text-align-last: initial; text-anchor: initial; text-autospace: initial; text-box: initial; text-combine-upright: initial; text-decoration: initial; text-decoration-skip-ink: initial; text-emphasis: initial; text-emphasis-position: initial; text-indent: initial; text-overflow: initial; text-shadow: initial; text-transform: initial; text-underline-offset: initial; text-underline-position: initial; text-wrap: initial; timeline-scope: initial; top: 0px; touch-action: initial; transform: initial; transform-box: initial; transform-origin: initial; transform-style: initial; transition: initial; translate: initial; user-select: initial; vector-effect: initial; vertical-align: initial; view-timeline: initial; view-transition-class: initial; view-transition-group: initial; view-transition-name: initial; visibility: initial; border-spacing: initial; -webkit-box-align: initial; -webkit-box-decoration-break: initial; -webkit-box-direction: initial; -webkit-box-flex: initial; -webkit-box-ordinal-group: initial; -webkit-box-orient: initial; -webkit-box-pack: initial; -webkit-box-reflect: initial; -webkit-line-break: initial; -webkit-line-clamp: initial; -webkit-mask-box-image: initial; -webkit-rtl-ordering: initial; -webkit-ruby-position: initial; -webkit-tap-highlight-color: initial; -webkit-text-combine: initial; -webkit-text-decorations-in-effect: initial; -webkit-text-fill-color: initial; -webkit-text-security: initial; -webkit-text-stroke: initial; -webkit-user-drag: initial; white-space-collapse: initial; widows: initial; width: 0px; will-change: initial; word-break: initial; word-spacing: initial; x: initial; y: initial; z-index: initial;"><div class="container bg-bg-primary text-text-primary font-inter" data-nm-theme="light"><!----><!----></div></div></template></div></div><div data-v-app=""><!----></div></body></html></template></nativemind-container><head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy Inspiration Generator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Mono',monospace;background:#fafafa}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+</style>
 </head>
 <body>
-  <div class="app-container" id="app">
-    <!-- Navigation -->
-    <nav class="nav">
-      <div class="nav-logo" id="nav-logo">
-        <span class="nav-logo-text">STRATEGY INSPIRATION</span>
-      </div>
-      <ul class="nav-menu">
-        <li><a href="#" id="nav-submit">Submit</a></li>
-        <li><a href="#" id="nav-manage">Manage</a></li>
-        <li><a href="#" id="nav-newsletter" target="_blank">Newsletter</a></li>
-        <li><a href="#" id="nav-website" target="_blank">Website</a></li>
-      </ul>
-    </nav>
+<div id="root"></div>
 
-    <!-- Home View -->
-    <main class="main-content" id="view-home">
-      <div class="intro-section" id="intro-section">
-        <p class="intro-text">
-          A curated collection of strategic wisdom, provocative insights, and visual inspiration 
-          gathered from the edges of culture and commerce. Click generate to spark your next breakthrough.
-        </p>
-      </div>
-      
-      <div class="content-display hidden" id="content-display"></div>
+<!-- Add Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-      <button class="generate-btn" id="generate-btn">Generate</button>
-    </main>
+<script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
 
-    <!-- Manage View -->
-    <div class="manage-container hidden" id="view-manage"></div>
-  </div>
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCq8PaIr0TcEGsRRa3Jjq-ifPCAVDAkvak",
+  authDomain: "scrapcards-f89b9.firebaseapp.com",
+  databaseURL: "https://scrapcards-f89b9-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "scrapcards-f89b9",
+  storageBucket: "scrapcards-f89b9.firebasestorage.app",
+  messagingSenderId: "113010862060",
+  appId: "1:113010862060:web:5533f4e82c19214e7ec2c9"
+};
 
-  <!-- Submit Modal -->
-  <div class="modal-overlay hidden" id="submit-modal">
-    <div class="modal">
-      <button class="modal-close" id="modal-close">&times;</button>
-      <h2 class="modal-title">Submit Inspiration</h2>
-      <form id="submit-form" name="submissions" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-        <input type="hidden" name="form-name" value="submissions">
-        <p class="hidden">
-          <label>Don't fill this out: <input name="bot-field"></label>
-        </p>
-        
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <div class="form-radio-group">
-            <label class="form-radio-label">
-              <input type="radio" name="type" value="quote" checked>
-              Quote
-            </label>
-            <label class="form-radio-label">
-              <input type="radio" name="type" value="image">
-              Image
-            </label>
-          </div>
-        </div>
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-        <div class="form-group" id="quote-fields">
-          <label class="form-label">Quote</label>
-          <textarea class="form-textarea" name="content" placeholder="Enter the quote..."></textarea>
-        </div>
+const{useState,useEffect,useCallback,useRef}=React;
 
-        <div class="form-group" id="author-field">
-          <label class="form-label">Author (optional)</label>
-          <input type="text" class="form-input" name="author" placeholder="Who said this?">
-        </div>
+const PROMPTS = [
+{id:1, prompt:"Think about...", explanation:"Every great strategy starts with a clear thought."},
+{id:2, prompt:"What if we...", explanation:"Innovation comes from questioning the status quo."},
+{id:3, prompt:"The real opportunity is...", explanation:"Look beyond the obvious to find breakthrough insights."},
+{id:4, prompt:"Nobody has noticed that...", explanation:"The best strategies exploit overlooked truths."},
+{id:5, prompt:"The tension between...", explanation:"Great strategies resolve fundamental conflicts."},
+{id:6, prompt:"We should stop pretending...", explanation:"Honesty about reality enables breakthrough thinking."},
+{id:7, prompt:"The category is actually about...", explanation:"Reframing the category unlocks new strategies."},
+{id:8, prompt:"Culture is moving toward...", explanation:"Anticipate where society is heading, not where it's been."},
+{id:9, prompt:"The unspoken truth is...", explanation:"Address what everyone thinks but nobody says."},
+{id:10, prompt:"Instead of competing on...", explanation:"Change the game rather than playing harder."}
+];
 
-        <div class="form-group hidden" id="image-fields">
-          <label class="form-label">Image</label>
-          <div class="image-upload-area" id="submit-image-upload">
-            <p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>
-          </div>
-          <input type="file" id="submit-image-input" name="image" accept="image/*" class="hidden">
-          <input type="hidden" name="imageData" id="submit-image-data">
-          <div style="margin-top: 0.75rem;">
-            <label class="form-label">Caption (optional)</label>
-            <input type="text" class="form-input" name="caption" placeholder="Describe the image...">
-          </div>
-        </div>
+const App=()=>{
+const[currentView,setCurrentView]=useState('home');
+const[currentCard,setCurrentCard]=useState(null);
+const[customItems,setCustomItems]=useState([]);
+const[prompts,setPrompts]=useState(PROMPTS);
+const[rotatingIcons,setRotatingIcons]=useState([]);
+const[adminPassword,setAdminPassword]=useState('');
+const[isAuthenticated,setIsAuthenticated]=useState(false);
+const[enteredPassword,setEnteredPassword]=useState('');
+const[showPasswordModal,setShowPasswordModal]=useState(false);
+const[addingNewItem,setAddingNewItem]=useState(false);
+const[editingItem,setEditingItem]=useState(null);
+const[newItem,setNewItem]=useState({prompt:'',explanation:'',category:'prompt'});
+const[categories,setCategories]=useState(['prompt','principle','question','truth']);
+const[newCategory,setNewCategory]=useState('');
+const[showingAddCategory,setShowingAddCategory]=useState(false);
+const[imageUpload,setImageUpload]=useState(null);
+const[imagePreview,setImagePreview]=useState(null);
+const[uploadingIcon,setUploadingIcon]=useState(false);
+const[newIconImage,setNewIconImage]=useState(null);
+const[newIconPreview,setNewIconPreview]=useState(null);
+const[searchTerm,setSearchTerm]=useState('');
+const[selectedCategory,setSelectedCategory]=useState('all');
+const[sortBy,setSortBy]=useState('newest');
+const fileInputRef=useRef(null);
+const iconFileInputRef=useRef(null);
+const[icons,setIcons]=useState([
+{emoji:'💡',label:'Lightbulb'},
+{emoji:'🎯',label:'Target'},
+{emoji:'🚀',label:'Rocket'},
+{emoji:'✨',label:'Sparkles'},
+{emoji:'💭',label:'Thought'},
+{emoji:'🔍',label:'Magnifying Glass'},
+{emoji:'📈',label:'Chart'},
+{emoji:'🎨',label:'Palette'},
+{emoji:'🏆',label:'Trophy'},
+{emoji:'💪',label:'Muscle'},
+{emoji:'🌟',label:'Star'},
+{emoji:'🔮',label:'Crystal Ball'}
+]);
 
-        <div class="form-group">
-          <label class="form-label">Your Name (optional)</label>
-          <input type="text" class="form-input" name="submittedBy" placeholder="For attribution...">
-        </div>
-
-        <button type="submit" class="form-submit">Submit for Review</button>
-        <div class="form-message hidden" id="submit-message"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Password Modal -->
-  <div class="modal-overlay hidden" id="password-modal">
-    <div class="modal" style="max-width: 400px;">
-      <button class="modal-close" id="password-modal-close">&times;</button>
-      <h2 class="modal-title">Admin Access</h2>
-      <form id="password-form">
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" class="form-input" id="admin-password" placeholder="Enter password...">
-        </div>
-        <button type="submit" class="form-submit">Access</button>
-        <div class="form-message hidden" id="password-message"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit Modal -->
-  <div class="modal-overlay hidden" id="edit-modal">
-    <div class="modal">
-      <button class="modal-close" id="edit-modal-close">&times;</button>
-      <h2 class="modal-title" id="edit-modal-title">Edit Content</h2>
-      <form id="edit-form">
-        <input type="hidden" id="edit-id">
-        <input type="hidden" id="edit-type">
-        
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <div class="form-radio-group">
-            <label class="form-radio-label">
-              <input type="radio" name="edit-type-radio" value="quote" id="edit-type-quote">
-              Quote
-            </label>
-            <label class="form-radio-label">
-              <input type="radio" name="edit-type-radio" value="image" id="edit-type-image">
-              Image
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group" id="edit-quote-fields">
-          <label class="form-label">Quote</label>
-          <textarea class="form-textarea" id="edit-content"></textarea>
-        </div>
-
-        <div class="form-group" id="edit-author-field">
-          <label class="form-label">Author</label>
-          <input type="text" class="form-input" id="edit-author">
-        </div>
-
-        <div class="form-group hidden" id="edit-image-fields">
-          <label class="form-label">Image</label>
-          <div class="image-upload-area" id="edit-image-upload">
-            <p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>
-          </div>
-          <input type="file" id="edit-image-input" accept="image/*" class="hidden">
-          <input type="hidden" id="edit-image-data">
-          <label class="form-label" style="margin-top: 0.75rem;">Caption</label>
-          <input type="text" class="form-input" id="edit-caption">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Tags (comma-separated)</label>
-          <input type="text" class="form-input" id="edit-tags" placeholder="strategy, insight, culture...">
-        </div>
-
-        <button type="submit" class="form-submit">Save</button>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    // =====================================================
-    // CONFIGURATION - UPDATE THESE VALUES
-    // =====================================================
-    
-    const CONFIG = {
-      // Admin password for the Manage section
-      adminPassword: "crapscraps2025",
-      
-      // External links
-      newsletterUrl: "https://stratscraps.substack.com/",
-      websiteUrl: "https:alexmorris.co",
-      
-      // Logo image path (relative to index.html, or set to null for text)
-      logoPath: null, // e.g., "./logo.png"
-      logoText: "STRATEGY SPARK SHUFFLER"
-    };
-
-    // =====================================================
-    // INITIAL CONTENT - Edit this to add your starting content
-    // Images should be base64 encoded (data:image/...) for universal visibility
-    // =====================================================
-    
-    const INITIAL_CONTENT = [
-      { 
-        id: "1", 
-        type: "quote", 
-        content: "Strategy and tactics without diagnosis is just panic.", 
-        author: "", 
-        tags: ["strategy"],
-        status: "approved"
-      },
-      { 
-        id: "2", 
-        type: "quote", 
-        content: "A single data point is almost always useless. Insight comes from one point in comparison to another.", 
-        author: "", 
-        tags: ["insight"],
-        status: "approved"
-      },
-      { 
-        id: "3", 
-        type: "quote", 
-        content: "Simplify, Then Exaggerate", 
-        author: "", 
-        tags: ["creative"],
-        status: "approved"
-      },
-      { 
-        id: "4", 
-        type: "quote", 
-        content: "Most geniuses prosper not by deconstructing intricate complexities but by exploiting unrecognized simplicities.", 
-        author: "Andy Benoit", 
-        tags: ["strategy"],
-        status: "approved"
-      },
-      { 
-        id: "5", 
-        type: "quote", 
-        content: "Culture eats strategy for breakfast.", 
-        author: "Peter Drucker", 
-        tags: ["culture", "strategy"],
-        status: "approved"
-      },
-      { 
-        id: "6", 
-        type: "quote", 
-        content: "The goal of marketing is making sure that the message taints the tastelessness of existence, and forces us to pay attention.", 
-        author: "", 
-        tags: ["marketing"],
-        status: "approved"
-      },
-      { 
-        id: "7", 
-        type: "quote", 
-        content: "Extreme principles can lead to extreme clarity.", 
-        author: "", 
-        tags: ["strategy"],
-        status: "approved"
-      },
-      { 
-        id: "8", 
-        type: "quote", 
-        content: "What conventions Must you break? What conventions could you break? What conventions should you NOT break?", 
-        author: "", 
-        tags: ["creative", "strategy"],
-        status: "approved"
-      }
-    ];
-
-    // =====================================================
-    // STATE MANAGEMENT
-    // =====================================================
-    
-    const STORAGE_KEY = 'strategy-inspiration-content';
-    
-    const state = {
-      isAuthenticated: false,
-      currentView: 'home',
-      content: [],
-      currentItem: null,
-      manageTab: 'content'
-    };
-
-    // =====================================================
-    // DOM ELEMENTS
-    // =====================================================
-    
-    const elements = {
-      navLogo: document.getElementById('nav-logo'),
-      navSubmit: document.getElementById('nav-submit'),
-      navManage: document.getElementById('nav-manage'),
-      navNewsletter: document.getElementById('nav-newsletter'),
-      navWebsite: document.getElementById('nav-website'),
-      viewHome: document.getElementById('view-home'),
-      viewManage: document.getElementById('view-manage'),
-      introSection: document.getElementById('intro-section'),
-      contentDisplay: document.getElementById('content-display'),
-      generateBtn: document.getElementById('generate-btn'),
-      submitModal: document.getElementById('submit-modal'),
-      submitForm: document.getElementById('submit-form'),
-      submitMessage: document.getElementById('submit-message'),
-      modalClose: document.getElementById('modal-close'),
-      passwordModal: document.getElementById('password-modal'),
-      passwordForm: document.getElementById('password-form'),
-      passwordMessage: document.getElementById('password-message'),
-      passwordModalClose: document.getElementById('password-modal-close'),
-      editModal: document.getElementById('edit-modal'),
-      editForm: document.getElementById('edit-form'),
-      editModalClose: document.getElementById('edit-modal-close'),
-      quoteFields: document.getElementById('quote-fields'),
-      authorField: document.getElementById('author-field'),
-      imageFields: document.getElementById('image-fields'),
-      submitImageUpload: document.getElementById('submit-image-upload'),
-      submitImageInput: document.getElementById('submit-image-input'),
-      submitImageData: document.getElementById('submit-image-data'),
-      editImageUpload: document.getElementById('edit-image-upload'),
-      editImageInput: document.getElementById('edit-image-input'),
-      editImageData: document.getElementById('edit-image-data')
-    };
-
-    // =====================================================
-    // INITIALIZATION
-    // =====================================================
-    
-    function init() {
-      // Set external links
-      elements.navNewsletter.href = CONFIG.newsletterUrl;
-      elements.navWebsite.href = CONFIG.websiteUrl;
-      
-      // Set logo
-      if (CONFIG.logoPath) {
-        elements.navLogo.innerHTML = `<img src="${CONFIG.logoPath}" alt="Logo">`;
-      } else {
-        elements.navLogo.innerHTML = `<span class="nav-logo-text">${CONFIG.logoText}</span>`;
-      }
-      
-      // Load content
-      loadContent();
-      
-      // Set up event listeners
-      setupEventListeners();
+// Load data from localStorage and Firebase on mount
+useEffect(()=>{
+  // Load local data
+  const stored=localStorage.getItem('customItems');
+  if(stored){
+    try{
+      setCustomItems(JSON.parse(stored));
+    }catch(e){
+      console.error('Error loading custom items:',e);
     }
-
-    function setupEventListeners() {
-      // Navigation
-      elements.navLogo.addEventListener('click', () => showView('home'));
-      elements.navSubmit.addEventListener('click', (e) => {
-        e.preventDefault();
-        openModal('submit');
-      });
-      elements.navManage.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (state.isAuthenticated) {
-          showView('manage');
-        } else {
-          openModal('password');
-        }
-      });
-
-      // Generate button
-      elements.generateBtn.addEventListener('click', generateRandom);
-
-      // Submit form type toggle
-      document.querySelectorAll('input[name="type"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          const isImage = e.target.value === 'image';
-          elements.quoteFields.classList.toggle('hidden', isImage);
-          elements.authorField.classList.toggle('hidden', isImage);
-          elements.imageFields.classList.toggle('hidden', !isImage);
-        });
-      });
-
-      // Edit form type toggle
-      document.querySelectorAll('input[name="edit-type-radio"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          const isImage = e.target.value === 'image';
-          document.getElementById('edit-quote-fields').classList.toggle('hidden', isImage);
-          document.getElementById('edit-author-field').classList.toggle('hidden', isImage);
-          document.getElementById('edit-image-fields').classList.toggle('hidden', !isImage);
-          document.getElementById('edit-type').value = e.target.value;
-        });
-      });
-
-      // Image upload for submit form
-      elements.submitImageUpload.addEventListener('click', () => {
-        elements.submitImageInput.click();
-      });
-      elements.submitImageInput.addEventListener('change', (e) => {
-        handleImageUpload(e, 'submit');
-      });
-
-      // Image upload for edit form
-      elements.editImageUpload.addEventListener('click', () => {
-        elements.editImageInput.click();
-      });
-      elements.editImageInput.addEventListener('change', (e) => {
-        handleImageUpload(e, 'edit');
-      });
-
-      // Submit form (using Netlify forms for submissions)
-      elements.submitForm.addEventListener('submit', handleSubmission);
-
-      // Password form
-      elements.passwordForm.addEventListener('submit', handlePasswordSubmit);
-
-      // Edit form
-      elements.editForm.addEventListener('submit', handleEditSubmit);
-
-      // Modal close buttons
-      elements.modalClose.addEventListener('click', () => closeModal('submit'));
-      elements.passwordModalClose.addEventListener('click', () => closeModal('password'));
-      elements.editModalClose.addEventListener('click', () => closeModal('edit'));
-
-      // Close modals on overlay click
-      document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-          if (e.target === overlay) {
-            overlay.classList.add('hidden');
-          }
-        });
-      });
+  }
+  
+  const storedPrompts=localStorage.getItem('prompts');
+  if(storedPrompts){
+    try{
+      setPrompts(JSON.parse(storedPrompts));
+    }catch(e){
+      console.error('Error loading prompts:',e);
+      setPrompts(PROMPTS);
     }
+  }
+  
+  const storedPassword=localStorage.getItem('adminPassword');
+  if(storedPassword)setAdminPassword(storedPassword);
+  
+  const storedCategories=localStorage.getItem('categories');
+  if(storedCategories){
+    try{
+      setCategories(JSON.parse(storedCategories));
+    }catch(e){
+      console.error('Error loading categories:',e);
+    }
+  }
+  
+  // Load rotating icons from Firebase
+  const iconsRef = database.ref('rotatingIcons');
+  iconsRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      // Convert Firebase object to array
+      const iconsArray = Object.keys(data).map(key => ({
+        ...data[key],
+        id: key
+      }));
+      setRotatingIcons(iconsArray);
+    } else {
+      setRotatingIcons([]);
+    }
+  });
+  
+  // Cleanup listener on unmount
+  return () => {
+    iconsRef.off();
+  };
+},[]);
 
-    // =====================================================
-    // IMAGE HANDLING - Base64 encoding for universal visibility
-    // =====================================================
+// Save rotating icons to Firebase instead of localStorage
+const saveRotatingIconsToFirebase = async (icons) => {
+  try {
+    // Clear existing icons
+    await database.ref('rotatingIcons').remove();
     
-    function handleImageUpload(e, formType) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      // Validate file type
-      if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
-        alert('Please upload a JPG, PNG, GIF, or WebP image.');
-        return;
-      }
-
-      // Validate file size (2MB max for reasonable localStorage storage)
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Image too large. Please use an image under 2MB.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target.result;
-        
-        if (formType === 'submit') {
-          elements.submitImageData.value = base64;
-          elements.submitImageUpload.innerHTML = `<img src="${base64}" class="image-preview" alt="Preview">`;
-          elements.submitImageUpload.classList.add('has-image');
-        } else {
-          elements.editImageData.value = base64;
-          elements.editImageUpload.innerHTML = `<img src="${base64}" class="image-preview" alt="Preview">`;
-          elements.editImageUpload.classList.add('has-image');
-        }
+    // Save new icons
+    const updates = {};
+    icons.forEach(icon => {
+      const key = icon.id || database.ref('rotatingIcons').push().key;
+      updates[`rotatingIcons/${key}`] = {
+        src: icon.src,
+        label: icon.label
       };
-      reader.readAsDataURL(file);
-    }
-
-    // =====================================================
-    // CONTENT MANAGEMENT
-    // =====================================================
+    });
     
-    function loadContent() {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          state.content = JSON.parse(stored);
-        } catch (e) {
-          console.error('Error parsing stored content:', e);
-          state.content = [...INITIAL_CONTENT];
-          saveContent();
-        }
-      } else {
-        state.content = [...INITIAL_CONTENT];
-        saveContent();
-      }
+    await database.ref().update(updates);
+  } catch (error) {
+    console.error('Error saving to Firebase:', error);
+    alert('Error saving icons. Please try again.');
+  }
+};
+
+// Update the handleIconUpload function
+const handleIconUpload=(e)=>{
+  const file=e.target.files[0];
+  if(file){
+    if(!file.type.startsWith('image/')){
+      alert('Please upload an image file');
+      return;
     }
-
-    function saveContent() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.content));
-      } catch (e) {
-        console.error('Error saving content:', e);
-        // If localStorage is full, alert the user
-        if (e.name === 'QuotaExceededError') {
-          alert('Storage is full. Try removing some images or exporting your data.');
-        }
-      }
+    if(file.size>5000000){
+      alert('Image must be less than 5MB');
+      return;
     }
+    setNewIconImage(file);
+    const reader=new FileReader();
+    reader.onloadend=()=>{
+      setNewIconPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+};
 
-    function generateRandom() {
-      const approved = state.content.filter(c => c.status === 'approved');
-      
-      if (approved.length === 0) {
-        alert('No content available. Add some in the Manage section!');
-        return;
-      }
+// Update the handleAddIcon function
+const handleAddIcon=async()=>{
+  if(!newIconPreview)return;
+  const label=prompt('Enter a label for this icon:');
+  if(!label)return;
+  
+  const newIcon={
+    id: Date.now().toString(),
+    src:newIconPreview,
+    label:label
+  };
+  
+  const updatedIcons=[...rotatingIcons,newIcon];
+  setRotatingIcons(updatedIcons);
+  await saveRotatingIconsToFirebase(updatedIcons);
+  
+  setNewIconImage(null);
+  setNewIconPreview(null);
+  setUploadingIcon(false);
+};
 
-      elements.generateBtn.classList.add('loading');
-      elements.generateBtn.innerHTML = '<span class="spinner"></span>Generating...';
+// Update the removeIcon function
+const removeIcon=async(indexToRemove)=>{
+  const updatedIcons=rotatingIcons.filter((_,index)=>index!==indexToRemove);
+  setRotatingIcons(updatedIcons);
+  await saveRotatingIconsToFirebase(updatedIcons);
+};
 
-      setTimeout(() => {
-        const randomIndex = Math.floor(Math.random() * approved.length);
-        state.currentItem = approved[randomIndex];
-        
-        renderCurrentItem();
-        
-        elements.generateBtn.classList.remove('loading');
-        elements.generateBtn.textContent = 'Generate';
-      }, 300);
+useEffect(()=>{
+  if(customItems.length>0){
+    localStorage.setItem('customItems',JSON.stringify(customItems));
+  }
+},[customItems]);
+
+useEffect(()=>{
+  if(prompts.length>0){
+    localStorage.setItem('prompts',JSON.stringify(prompts));
+  }
+},[prompts]);
+
+useEffect(()=>{
+  if(categories.length>0){
+    localStorage.setItem('categories',JSON.stringify(categories));
+  }
+},[categories]);
+
+const shuffleCards=useCallback(()=>{
+  const allItems=[...prompts,...customItems];
+  if(allItems.length===0)return;
+  const filtered=searchTerm||selectedCategory!=='all'?allItems.filter(item=>{
+    const matchesSearch=!searchTerm||item.prompt.toLowerCase().includes(searchTerm.toLowerCase())||item.explanation.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory=selectedCategory==='all'||item.category===selectedCategory||(selectedCategory==='prompt'&&!item.category);
+    return matchesSearch&&matchesCategory;
+  }):allItems;
+  if(filtered.length===0){
+    setCurrentCard(null);
+    return;
+  }
+  let sorted=[...filtered];
+  if(sortBy==='newest'){
+    sorted.sort((a,b)=>(b.id||0)-(a.id||0));
+  }else if(sortBy==='oldest'){
+    sorted.sort((a,b)=>(a.id||0)-(b.id||0));
+  }else if(sortBy==='alphabetical'){
+    sorted.sort((a,b)=>a.prompt.localeCompare(b.prompt));
+  }
+  const randomIndex=Math.floor(Math.random()*sorted.length);
+  setCurrentCard(sorted[randomIndex]);
+},[prompts,customItems,searchTerm,selectedCategory,sortBy]);
+
+useEffect(()=>{
+  if(currentView==='home'){
+    shuffleCards();
+    const interval=setInterval(shuffleCards,8000);
+    return()=>clearInterval(interval);
+  }
+},[currentView,shuffleCards]);
+
+const handlePasswordSubmit=()=>{
+  if(enteredPassword===adminPassword){
+    setIsAuthenticated(true);
+    setShowPasswordModal(false);
+    setEnteredPassword('');
+  }else{
+    alert('Incorrect password');
+    setEnteredPassword('');
+  }
+};
+
+const handlePasswordSet=()=>{
+  const newPass=prompt('Set admin password:');
+  if(newPass){
+    setAdminPassword(newPass);
+    localStorage.setItem('adminPassword',newPass);
+    alert('Password set successfully');
+  }
+};
+
+const handleImageUpload=(e)=>{
+  const file=e.target.files[0];
+  if(file){
+    if(!file.type.startsWith('image/')){
+      alert('Please upload an image file');
+      return;
     }
-
-    function renderCurrentItem() {
-      elements.introSection.classList.add('hidden');
-      elements.contentDisplay.classList.remove('hidden');
-      
-      const item = state.currentItem;
-      
-      if (item.type === 'quote') {
-        elements.contentDisplay.innerHTML = `
-          <div class="quote-display" style="animation: fadeIn 0.5s ease">
-            <p class="quote-text">${escapeHtml(item.content)}</p>
-            ${item.author ? `<p class="quote-author">— ${escapeHtml(item.author)}</p>` : ''}
-          </div>
-        `;
-      } else if (item.type === 'image') {
-        elements.contentDisplay.innerHTML = `
-          <div class="image-display" style="animation: fadeIn 0.5s ease">
-            <img src="${item.imageData}" alt="${escapeHtml(item.caption || 'Inspiration image')}">
-            ${item.caption ? `<p class="image-caption">${escapeHtml(item.caption)}</p>` : ''}
-          </div>
-        `;
-      }
+    if(file.size>5000000){
+      alert('Image must be less than 5MB');
+      return;
     }
+    setImageUpload(file);
+    const reader=new FileReader();
+    reader.onloadend=()=>{
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+};
 
-    // =====================================================
-    // VIEW MANAGEMENT
-    // =====================================================
-    
-    function showView(view) {
-      state.currentView = view;
-      
-      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
-      
-      if (view === 'home') {
-        elements.viewHome.classList.remove('hidden');
-        elements.viewManage.classList.add('hidden');
-        resetHomeView();
-      } else if (view === 'manage') {
-        elements.viewHome.classList.add('hidden');
-        elements.viewManage.classList.remove('hidden');
-        elements.navManage.classList.add('active');
-        renderManageView();
-      }
-    }
+const handleAddItem=()=>{
+  if(!newItem.prompt||!newItem.explanation)return;
+  const item={
+    ...newItem,
+    id:Date.now(),
+    image:imagePreview||null
+  };
+  setCustomItems([...customItems,item]);
+  setNewItem({prompt:'',explanation:'',category:'prompt'});
+  setAddingNewItem(false);
+  setImagePreview(null);
+  setImageUpload(null);
+};
 
-    function resetHomeView() {
-      elements.introSection.classList.remove('hidden');
-      elements.contentDisplay.classList.add('hidden');
-      elements.contentDisplay.innerHTML = '';
-      state.currentItem = null;
-    }
+const handleUpdateItem=()=>{
+  if(!editingItem.prompt||!editingItem.explanation)return;
+  const updatedItem={...editingItem,image:imagePreview||editingItem.image};
+  if(editingItem.isDefault){
+    setPrompts(prompts.map(p=>p.id===editingItem.id?updatedItem:p));
+  }else{
+    setCustomItems(customItems.map(item=>item.id===editingItem.id?updatedItem:item));
+  }
+  setEditingItem(null);
+  setImagePreview(null);
+  setImageUpload(null);
+};
 
-    function openModal(type) {
-      if (type === 'submit') {
-        elements.submitModal.classList.remove('hidden');
-        elements.submitForm.reset();
-        elements.submitMessage.classList.add('hidden');
-        elements.submitImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
-        elements.submitImageUpload.classList.remove('has-image');
-        elements.submitImageData.value = '';
-        // Reset to quote type
-        elements.quoteFields.classList.remove('hidden');
-        elements.authorField.classList.remove('hidden');
-        elements.imageFields.classList.add('hidden');
-      } else if (type === 'password') {
-        elements.passwordModal.classList.remove('hidden');
-        document.getElementById('admin-password').value = '';
-        elements.passwordMessage.classList.add('hidden');
-      } else if (type === 'edit') {
-        elements.editModal.classList.remove('hidden');
-      }
-    }
+const handleDeleteItem=(id,isDefault=false)=>{
+  if(!confirm('Delete this item?'))return;
+  if(isDefault){
+    setPrompts(prompts.filter(p=>p.id!==id));
+  }else{
+    setCustomItems(customItems.filter(item=>item.id!==id));
+  }
+};
 
-    function closeModal(type) {
-      if (type === 'submit') {
-        elements.submitModal.classList.add('hidden');
-      } else if (type === 'password') {
-        elements.passwordModal.classList.add('hidden');
-      } else if (type === 'edit') {
-        elements.editModal.classList.add('hidden');
-      }
-    }
+const handleAddCategory=()=>{
+  if(!newCategory||categories.includes(newCategory.toLowerCase()))return;
+  const updated=[...categories,newCategory.toLowerCase()];
+  setCategories(updated);
+  setNewCategory('');
+  setShowingAddCategory(false);
+};
 
-    // =====================================================
-    // FORM HANDLERS
-    // =====================================================
-    
-    async function handleSubmission(e) {
-      e.preventDefault();
-      
-      const formData = new FormData(e.target);
-      const type = formData.get('type');
-      
-      // For Netlify forms, we'll submit via fetch
-      // But also show a success message locally
-      
-      try {
-        // Submit to Netlify
-        await fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(formData).toString()
-        });
-        
-        showMessage('submit', 'Thank you! Your submission has been received and will be reviewed.', 'success');
-        e.target.reset();
-        elements.submitImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
-        elements.submitImageUpload.classList.remove('has-image');
-        
-        setTimeout(() => closeModal('submit'), 2000);
-      } catch (error) {
-        console.error('Submission error:', error);
-        showMessage('submit', 'Submission received! (Note: Form processing requires Netlify deployment)', 'success');
-        setTimeout(() => closeModal('submit'), 2000);
-      }
-    }
+const RotatingIcon=({icon,index})=>{
+  const delay=index*0.1;
+  return<div style={{
+    position:'absolute',
+    fontSize:'80px',
+    opacity:0.03,
+    animation:`float${index%3+1} ${20+index*2}s infinite`,
+    animationDelay:`${delay}s`,
+    left:`${(index*20)%100}%`,
+    top:`${(index*30)%100}%`,
+    transform:'translate(-50%,-50%)',
+    pointerEvents:'none',
+    userSelect:'none'
+  }}>
+    {icon.src?<img src={icon.src} alt={icon.label} style={{width:'80px',height:'80px',opacity:0.3}}/>:icon.emoji}
+  </div>
+};
 
-    function handlePasswordSubmit(e) {
-      e.preventDefault();
-      const password = document.getElementById('admin-password').value;
-      
-      if (password === CONFIG.adminPassword) {
-        state.isAuthenticated = true;
-        closeModal('password');
-        showView('manage');
-      } else {
-        showMessage('password', 'Incorrect password.', 'error');
-      }
-    }
+const styles=`
+@keyframes float1{
+  0%,100%{transform:translate(-50%,-50%)rotate(0deg)scale(1)}
+  50%{transform:translate(-50%,-50%)rotate(180deg)scale(1.1)}
+}
+@keyframes float2{
+  0%,100%{transform:translate(-50%,-50%)rotate(0deg)scale(1)}
+  33%{transform:translate(-50%,-50%)rotate(120deg)scale(0.9)}
+  66%{transform:translate(-50%,-50%)rotate(240deg)scale(1.1)}
+}
+@keyframes float3{
+  0%,100%{transform:translate(-50%,-50%)rotate(0deg)scale(1)}
+  25%{transform:translate(-50%,-50%)rotate(90deg)scale(1.05)}
+  50%{transform:translate(-50%,-50%)rotate(180deg)scale(0.95)}
+  75%{transform:translate(-50%,-50%)rotate(270deg)scale(1.05)}
+}
+`;
 
-    function handleEditSubmit(e) {
-      e.preventDefault();
-      
-      const id = document.getElementById('edit-id').value;
-      const type = document.getElementById('edit-type').value;
-      const tagsRaw = document.getElementById('edit-tags').value;
-      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+return<div style={{minHeight:'100vh',background:'#fafafa',display:'flex',justifyContent:'center',alignItems:'center',padding:'20px',position:'relative',overflow:'hidden'}}>
+<style>{styles}</style>
 
-      const index = state.content.findIndex(c => c.id === id);
-      if (index === -1 && id) {
-        // Editing existing item not found
-        return;
-      }
+{/* Floating Icons Background */}
+{currentView==='home'&&(
+  <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>
+    {[...icons,...rotatingIcons].map((icon,index)=>(
+      <RotatingIcon key={index} icon={icon} index={index}/>
+    ))}
+  </div>
+)}
 
-      const item = {
-        id: id || `item_${Date.now()}`,
-        type,
-        tags,
-        status: 'approved'
-      };
-
-      if (type === 'quote') {
-        item.content = document.getElementById('edit-content').value;
-        item.author = document.getElementById('edit-author').value;
-      } else {
-        item.imageData = elements.editImageData.value;
-        item.caption = document.getElementById('edit-caption').value;
-        
-        if (!item.imageData) {
-          alert('Please upload an image.');
-          return;
-        }
-      }
-
-      if (id && index !== -1) {
-        state.content[index] = item;
-      } else {
-        state.content.push(item);
-      }
-
-      saveContent();
-      closeModal('edit');
-      renderManageView();
-    }
-
-    function showMessage(formType, message, type) {
-      const el = formType === 'submit' ? elements.submitMessage : elements.passwordMessage;
-      el.textContent = message;
-      el.className = `form-message ${type}`;
-      el.classList.remove('hidden');
-    }
-
-    // =====================================================
-    // MANAGE VIEW
-    // =====================================================
-    
-    function renderManageView() {
-      const quotes = state.content.filter(c => c.type === 'quote');
-      const images = state.content.filter(c => c.type === 'image');
-
-      elements.viewManage.innerHTML = `
-        <div class="manage-header">
-          <h1 class="manage-title">Content Management</h1>
-          <button class="card-btn" id="add-content-btn" style="width: auto; padding: 0.75rem 1.5rem;">
-            + Add New
-          </button>
-        </div>
-
-        <div class="data-notice">
-          <div class="data-notice-title">💾 Data Storage</div>
-          <p>Content is stored in your browser's localStorage. To share content across devices or back up your collection, use the export/import buttons below.</p>
-          <div class="data-actions">
-            <button class="data-btn" id="export-btn">Export Data</button>
-            <button class="data-btn" id="import-btn">Import Data</button>
-            <input type="file" id="import-file" accept=".json" class="hidden">
-          </div>
-        </div>
-        
-        <div class="manage-tabs">
-          <button class="manage-tab ${state.manageTab === 'content' ? 'active' : ''}" data-tab="content">
-            All Content (${state.content.length})
-          </button>
-          <button class="manage-tab ${state.manageTab === 'quotes' ? 'active' : ''}" data-tab="quotes">
-            Quotes (${quotes.length})
-          </button>
-          <button class="manage-tab ${state.manageTab === 'images' ? 'active' : ''}" data-tab="images">
-            Images (${images.length})
-          </button>
-        </div>
-        
-        <div class="content-grid" id="content-grid">
-          ${renderContentCards()}
-        </div>
-      `;
-
-      // Tab switching
-      document.querySelectorAll('.manage-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          state.manageTab = tab.dataset.tab;
-          renderManageView();
-        });
-      });
-
-      // Add content button
-      document.getElementById('add-content-btn').addEventListener('click', openAddModal);
-
-      // Export/Import
-      document.getElementById('export-btn').addEventListener('click', exportData);
-      document.getElementById('import-btn').addEventListener('click', () => {
-        document.getElementById('import-file').click();
-      });
-      document.getElementById('import-file').addEventListener('change', importData);
-
-      // Card action buttons
-      setupCardActions();
-    }
-
-    function renderContentCards() {
-      let items = state.content;
-      
-      if (state.manageTab === 'quotes') {
-        items = items.filter(c => c.type === 'quote');
-      } else if (state.manageTab === 'images') {
-        items = items.filter(c => c.type === 'image');
-      }
-
-      if (items.length === 0) {
-        return '<div class="empty-state"><p>No content yet. Click "+ Add New" to get started.</p></div>';
-      }
-
-      return items.map(item => `
-        <div class="content-card" data-id="${item.id}">
-          <div class="content-card-type">${item.type}</div>
-          ${item.type === 'quote' 
-            ? `<p class="content-card-text">"${escapeHtml(item.content)}"</p>
-               ${item.author ? `<p class="content-card-author">— ${escapeHtml(item.author)}</p>` : ''}`
-            : `<img class="content-card-image" src="${item.imageData}" alt="">
-               ${item.caption ? `<p class="content-card-text">${escapeHtml(item.caption)}</p>` : ''}`
-          }
-          ${item.tags && item.tags.length > 0 
-            ? `<div class="content-card-tags">${item.tags.map(t => `<span class="content-tag">${escapeHtml(t)}</span>`).join('')}</div>` 
-            : ''}
-          <div class="content-card-actions">
-            <button class="card-btn edit-btn" data-id="${item.id}">Edit</button>
-            <button class="card-btn danger delete-btn" data-id="${item.id}">Delete</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function setupCardActions() {
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => openEditModal(btn.dataset.id));
-      });
-
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => deleteContent(btn.dataset.id));
-      });
-    }
-
-    function openAddModal() {
-      document.getElementById('edit-modal-title').textContent = 'Add Content';
-      document.getElementById('edit-id').value = '';
-      document.getElementById('edit-type').value = 'quote';
-      document.getElementById('edit-type-quote').checked = true;
-      document.getElementById('edit-content').value = '';
-      document.getElementById('edit-author').value = '';
-      document.getElementById('edit-caption').value = '';
-      document.getElementById('edit-tags').value = '';
-      elements.editImageData.value = '';
-      elements.editImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
-      elements.editImageUpload.classList.remove('has-image');
-      
-      // Show quote fields by default
-      document.getElementById('edit-quote-fields').classList.remove('hidden');
-      document.getElementById('edit-author-field').classList.remove('hidden');
-      document.getElementById('edit-image-fields').classList.add('hidden');
-      
-      openModal('edit');
-    }
-
-    function openEditModal(id) {
-      const item = state.content.find(c => c.id === id);
-      if (!item) return;
-
-      document.getElementById('edit-modal-title').textContent = 'Edit Content';
-      document.getElementById('edit-id').value = id;
-      document.getElementById('edit-type').value = item.type;
-      document.getElementById('edit-tags').value = (item.tags || []).join(', ');
-
-      if (item.type === 'quote') {
-        document.getElementById('edit-type-quote').checked = true;
-        document.getElementById('edit-quote-fields').classList.remove('hidden');
-        document.getElementById('edit-author-field').classList.remove('hidden');
-        document.getElementById('edit-image-fields').classList.add('hidden');
-        document.getElementById('edit-content').value = item.content || '';
-        document.getElementById('edit-author').value = item.author || '';
-      } else {
-        document.getElementById('edit-type-image').checked = true;
-        document.getElementById('edit-quote-fields').classList.add('hidden');
-        document.getElementById('edit-author-field').classList.add('hidden');
-        document.getElementById('edit-image-fields').classList.remove('hidden');
-        document.getElementById('edit-caption').value = item.caption || '';
-        elements.editImageData.value = item.imageData || '';
-        
-        if (item.imageData) {
-          elements.editImageUpload.innerHTML = `<img src="${item.imageData}" class="image-preview" alt="Preview">`;
-          elements.editImageUpload.classList.add('has-image');
-        }
-      }
-
-      openModal('edit');
-    }
-
-    function deleteContent(id) {
-      if (!confirm('Are you sure you want to delete this?')) return;
-
-      state.content = state.content.filter(c => c.id !== id);
-      saveContent();
-      renderManageView();
-    }
-
-    // =====================================================
-    // DATA EXPORT/IMPORT
-    // =====================================================
-    
-    function exportData() {
-      const dataStr = JSON.stringify(state.content, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `strategy-inspiration-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    function importData(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const imported = JSON.parse(event.target.result);
-          
-          if (!Array.isArray(imported)) {
-            alert('Invalid data format. Expected an array of content items.');
-            return;
-          }
-
-          if (confirm(`Import ${imported.length} items? This will replace your current content.`)) {
-            state.content = imported;
-            saveContent();
-            renderManageView();
-            alert('Data imported successfully!');
-          }
-        } catch (err) {
-          alert('Error parsing file. Make sure it\'s a valid JSON file.');
-        }
-      };
-      reader.readAsText(file);
-      
-      // Reset the input
-      e.target.value = '';
-    }
-
-    // =====================================================
-    // UTILITIES
-    // =====================================================
-    
-    function escapeHtml(str) {
-      if (!str) return '';
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
-    // =====================================================
-    // START THE APP
-    // =====================================================
-    
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
-</body>
-</html>
+{currentView==='home'&&<div style={{maxWidth:'800px',width:'100%',textAlign:'center',position:'relative',zIndex:1}}>
+  <div style={{marginBottom:'80px',animation:'fadeIn 0.5s ease-out'}}>
+    <h1 style={{fontSize:'clamp(32px,5vw,48px)',fontWeight:'600',margin
