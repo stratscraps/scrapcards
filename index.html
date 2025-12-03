@@ -1,2127 +1,1564 @@
-import React, { useState, useEffect } from 'react';
-import { Lightbulb, Send } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategy Inspiration Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #fafaf8;
+      --bg-secondary: #f0f0ec;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --accent: #2d2d2d;
+      --accent-hover: #000000;
+      --border: #e0e0dc;
+      --success: #2d5a3d;
+      --error: #8b3a3a;
+    }
 
-const InspirationGenerator = () => {
-  const [currentItem, setCurrentItem] = useState(null);
-  const [view, setView] = useState('generate');
-  const [loading, setLoading] = useState(false);
-  const [submitForm, setSubmitForm] = useState({
-    type: 'quote',
-    content: '',
-    author: '',
-    imageUrl: '',
-    submittedBy: ''
-  });
-  const [submitStatus, setSubmitStatus] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [collection, setCollection] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-  const [editingItem, setEditingItem] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [generateFilter, setGenerateFilter] = useState('all'); // 'all', 'quote', 'image'
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [bulkUploadMode, setBulkUploadMode] = useState(false);
-  const [bulkImages, setBulkImages] = useState([]);
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  const ADMIN_PASSWORD = 'stratscrap2024'; // Change this to your desired password
+    html, body {
+      height: 100%;
+    }
 
-  // Initial curated collection from Are.na
-  const initialCollection = [
-    { type: 'quote', content: 'Strategy and tactics without diagnosis is just panic.', author: '' },
-    { type: 'quote', content: 'A single data point is almost always useless. Insight comes from one point in comparison to another.', author: '' },
-    { type: 'quote', content: 'Not all problems are the problem', author: '' },
-    { type: 'quote', content: 'Simplify, Then Exaggerate', author: '' },
-    { type: 'quote', content: 'We all know that every human being has basic physical needs: for food, for water, for shelter, for clean air. It turns out that, in the same way, all humans have certain basic psychological needs. We need to feel we belong. We need to feel valued. We need to feel we\'re good at something. We need to feel we have a secure future.', author: '' },
-    { type: 'quote', content: 'What conventions Must you break? What conventions could you break? What conventions should you NOT break?', author: '' },
-    { type: 'quote', content: 'Define the actual thing we\'re doing before naming the idea etc.', author: '' },
-    { type: 'quote', content: 'Extreme principles can lead to extreme clarity.', author: '' },
-    { type: 'quote', content: 'Anything incredible is going to be offensive to somebody', author: '' },
-    { type: 'quote', content: 'The goal of marketing, then — especially as it pertains to things people would rather not pay attention to — is in making sure that the message taints the tastelessness of existence, and forces us to pay attention.', author: '' },
-    { type: 'quote', content: 'You want to deliver to the world what you would buy if you were on the other end.', author: 'Shane Parrish, Farnham Street' },
-    { type: 'quote', content: 'Most geniuses—especially those who lead others—prosper not by deconstructing intricate complexities but by exploiting unrecognized simplicities.', author: 'Andy Benoit' },
-    { type: 'quote', content: 'Advertisements constitute the only \'good news\' in the newspaper.', author: 'Marshal McLuhan' },
-    { type: 'quote', content: 'Communication is not what said but what\'s taken from it.', author: '' },
-    { type: 'quote', content: 'Your definition of the problem is likely to be more important than your definition of the answer', author: '' },
-    { type: 'quote', content: 'Ads (and briefs and everything really) only need to be three things – true, distinctive, motivating.', author: '' },
-    { type: 'quote', content: 'As Churchill said, "Never let the truth spoil a good story."', author: '' },
-    { type: 'quote', content: 'Identity formation is inextricably linked to the urge to consume', author: '' },
-    { type: 'quote', content: 'The only cool PR is provided by one\'s enemies. They toil incessantly and for free', author: '' },
-    { type: 'quote', content: 'Haters make our lovers love us more.', author: '' },
-    { type: 'quote', content: 'You can be relevant as hell and still be boring as fuck', author: 'Martin Weigel' },
-    { type: 'quote', content: 'Compromise is thought to typically be when ideas are taken out. But the most dangerous compromise happens when things are added in', author: 'Pritchard' },
-    { type: 'quote', content: 'Differentiation is fleeting', author: '' },
-    { type: 'quote', content: 'For the mediocre there is no hope. Mediocrity is a sin.', author: 'Jack London' },
-    { type: 'quote', content: 'Most people aren\'t "in the market" for anything most of the time.', author: '' },
-    { type: 'quote', content: 'Why restrict yourself with facts when you can dramatize fiction', author: '' },
-    { type: 'quote', content: 'Brands don\'t exist in real life, they\'re in people\'s heads.', author: '' },
-    { type: 'quote', content: 'There is no Soylent version of thought and reflection — creativity is unpredictable, and it simply takes time.', author: '' },
-    { type: 'quote', content: 'We are makers of difference.', author: '' },
-    { type: 'quote', content: 'In order to be profitable, capitalism needs a constant creation of new differences, and what collectors are looking for is the latest difference.', author: 'Luc Boltanski' },
-    { type: 'quote', content: 'The hero of the story should be the thing you want your audience to support. The villain should be situational and systemic factors.', author: '' },
-    { type: 'quote', content: 'Only put details where you want people to pay attention', author: '' },
-    { type: 'quote', content: 'The essence of strategy is choosing what not to do.', author: 'Michael Porter' },
-    { type: 'quote', content: 'Say big things with small words', author: '' },
-    { type: 'quote', content: 'A brand\'s positioning is not yours to own.', author: '' },
-    { type: 'quote', content: 'Smart clients dont give a shit about 30 slides of set up to an idea. they just care if the idea is good.', author: '' },
-    { type: 'quote', content: 'The job of the brief is not simply to define the existing problem. We don\'t need strategists for that, the client can do that. The job of the brief is to change, to reframe, the problem.', author: '' },
-    { type: 'quote', content: 'Creativity is about solving a problem in a new way.', author: '' },
-    { type: 'quote', content: 'Effective advertising must find new ways to repeat itself.', author: '' },
-    { type: 'quote', content: 'Positioning is a competitor driven, not customer driven, approach.', author: '' },
-    { type: 'quote', content: 'Would we rather be wasteful and effective or efficient and impotent?', author: '' },
-    { type: 'quote', content: 'Messages can be microtargeted, but meaning has to be mass-produced.', author: '' },
-    { type: 'quote', content: 'The greater the similarity between two products, the less reason/rationality has a place', author: '' },
-    { type: 'quote', content: 'We can be outrageous to a purpose. That, for me, is great advertising.', author: '' },
-    { type: 'quote', content: 'It\'s our job to excite people, not to try to herd them.', author: '' },
-    { type: 'quote', content: 'The brief is the what we are doing. The creative is the how', author: '' },
-    { type: 'quote', content: 'Just one thing is enough. You only need to come back with one usable story to make all of your work worth it.', author: '' },
-    { type: 'quote', content: 'Don\'t get stuck. If you feel like what you\'re doing at any moment isn\'t going to lead anywhere, get out of there and go explore something/someone else.', author: '' },
-    { type: 'quote', content: 'In order to come back with unexpected insights, you have to take unexpected actions.', author: '' },
-    { type: 'quote', content: 'Adapt what is useful, reject what is useless, and add what is specifically your own', author: 'Bruce Lee' },
-    { type: 'quote', content: 'Many clients actually don\'t want insight – although that\'s exactly what they say they want. Insight is challenging because it forces you to change the way you think, the way you act, the way you feel, and the goals you seek.', author: '' },
-    { type: 'quote', content: 'Not everything needs to be strategy heavy', author: '' },
-    { type: 'quote', content: 'It should be worthy of remark', author: '' },
-    { type: 'quote', content: 'Don\'t mistake clever for interesting', author: '' },
-    { type: 'quote', content: 'Beware the Pander Zone', author: '' },
-    { type: 'quote', content: 'What is at the intersection of utility and novelty?', author: '' },
-    { type: 'quote', content: 'Good Strat: Simple. Great Strat: Memorable', author: '' },
-    { type: 'quote', content: 'Cut back until it hurts', author: '' },
-    { type: 'quote', content: 'Write it ugly before anything else', author: '' },
-    { type: 'quote', content: 'Always start with the Ask', author: '' },
-    { type: 'quote', content: 'MAKE IT ONE THING', author: '' },
-    { type: 'quote', content: 'People don\'t buy products, they buy better versions of themselves', author: '' },
-    { type: 'quote', content: 'The longer the brief, the more things there are to focus on that aren\'t the thing.', author: '' },
-    { type: 'quote', content: 'Good work cannot be made in a trust void', author: '' },
-    { type: 'quote', content: 'Nothing is ownable until you own it', author: '' },
-    { type: 'quote', content: 'You can\'t have a strategy if you haven\'t talked to anyone.', author: '' },
-    { type: 'quote', content: 'By definition, we\'re here to make noise.', author: '' },
-    { type: 'quote', content: 'What is the myth we want to create?', author: '' },
-    { type: 'quote', content: 'CLARITY. BREVITY. NOVELTY.', author: '' },
-    { type: 'quote', content: 'Be clear in the nonnegotiable.', author: '' },
-    { type: 'quote', content: 'Slay a sacred cow.', author: '' },
-    { type: 'quote', content: 'Good strategy takes things off the table', author: '' },
-    { type: 'quote', content: 'Sometimes looking is more important than finding', author: '' },
-    { type: 'quote', content: 'Have a point of view before even thinking about opening keynote.', author: '' },
-    { type: 'quote', content: 'Culture is passed hand to hand. You can\'t be part of it and maintain control.', author: '' },
-    { type: 'quote', content: 'At the end of the day, it should tap into something deeply human, or make you famous.', author: '' },
-    { type: 'quote', content: 'Like a flick to the brain.', author: '' },
-    { type: 'quote', content: 'It is of extreme importance to maintain a vision for the work.', author: '' },
-    { type: 'quote', content: 'There are trends, but no rules', author: '' },
-    { type: 'quote', content: 'Diagnosis → Guiding Policy → Coherent Actions', author: '' },
-    { type: 'quote', content: 'What do they secretly wish for?', author: '' },
-    { type: 'quote', content: 'Listen to your gut. You already know more than you know.', author: '' },
-    { type: 'quote', content: 'Whether or not it is accurate is less important than whether or not it is right', author: '' },
-    { type: 'quote', content: 'Kill the reveal.', author: '' },
-    { type: 'quote', content: 'Open emotionally. Close rationally.', author: '' },
-    { type: 'quote', content: 'Don\'t be blinded by the now', author: '' },
-    { type: 'quote', content: 'Find the intersection of irrefutable and reckless', author: '' },
-    { type: 'quote', content: 'A long awkward sentence that demonstrates management\'s inability to think clearly.', author: 'Scott Adams on Mission Statements' },
-    { type: 'quote', content: 'Nothing defines humans better than their willingness to do irrational things in the pursuit of phenomenally unlikely payoffs. This is the principle behind lotteries, dating, and religion.', author: 'Scott Adams' },
-    { type: 'quote', content: 'People are very open-minded about new things - as long as they\'re exactly like the old ones.', author: 'Charles F. Kettering' },
-    { type: 'quote', content: 'If you want to kill any idea in the world today, get a committee working on it.', author: 'Charles F. Kettering' },
-    { type: 'quote', content: 'The wisest are the most annoyed at the loss of time.', author: 'Dante Alighieri' },
-    { type: 'quote', content: 'Never speak of yourself to others; make them talk about themselves instead; therein lies the whole art of pleasing.', author: 'Edmond de Goncourt' },
-    { type: 'quote', content: 'Most people need love and acceptance a lot more than they need advice.', author: 'Bob Goff' },
-    { type: 'quote', content: 'Failure is a resource that can be managed.', author: 'Scott Adams' },
-    { type: 'quote', content: 'Don\'t be the person who says yes with their mouth but no with their actions.', author: 'Ryan Holiday' },
-    { type: 'quote', content: 'In the information game, the race doesn\'t go to the swift, it goes to the selective.', author: 'Tim Ferriss' },
-    { type: 'quote', content: 'If the path before you is clear, you\'re probably on someone else\'s.', author: 'Joseph Campbell' },
-    { type: 'quote', content: 'The most courageous decision that you can make each day is to be in a good mood.', author: 'Voltaire' },
-    { type: 'quote', content: 'Let everything happen to you: beauty and terror. Just keep going. No feeling is final.', author: 'Rainer Maria Rilke' },
-    { type: 'quote', content: 'Things usually happen around us, not to us.', author: 'Unknown' },
-    { type: 'quote', content: 'Thinking is easy, acting is difficult, and to put one\'s thoughts into action is the most difficult thing in the world.', author: 'Johann Wolfgang von Goethe' },
-    { type: 'quote', content: 'Character is like a tree and reputation like a shadow. The shadow is what we think of it; the tree is the real thing.', author: 'Abraham Lincoln' },
-    { type: 'quote', content: 'It\'s not always that we need to do more but rather that we need to focus on less.', author: 'Nathan W. Morris' },
-    { type: 'quote', content: 'Perfection is finally attained not when there is no longer anything to add, but when there is no longer anything to take away.', author: 'Antoine de Saint-Exupéry' },
-    { type: 'quote', content: 'I was wise enough to never grow up while fooling most people into believing I had.', author: 'Margaret Mead' },
-    { type: 'quote', content: 'Man is most nearly himself when he achieves the seriousness of a child at play.', author: 'Heraclitus' },
-    { type: 'quote', content: 'If you change the way you look at things, the things you look at change.', author: 'Wayne Dyer' },
-    { type: 'quote', content: 'When we have alternatives, we compromise instead of commit.', author: 'Seth Godin' },
-    { type: 'quote', content: 'In a world where information is abundant and easy to access, the real advantage is knowing where to focus.', author: 'James Clear' },
-    { type: 'quote', content: 'The real problem of humanity is the following: we have paleolithic emotions; medieval institutions; and god-like technology.', author: 'E.O. Wilson' },
-    { type: 'quote', content: 'There comes a point where we need to stop just pulling people out of the river. We need to go upstream and find out why they\'re falling in.', author: 'Bishop Desmond Tutu' },
-    { type: 'quote', content: 'Asking myself "is this helping me get what I want" is becoming one of my favorite questions.', author: 'Shane Parrish' },
-    { type: 'quote', content: 'I wish I actually got in trouble, real trouble with my work ... such as getting arrested for it. Then I would know I was doing something right.', author: 'James Victore' },
-    { type: 'quote', content: 'The Law of Triviality: members of an organization give disproportionate weight to trivial issues.', author: 'C. Northcote Parkinson' },
-    { type: 'quote', content: 'When the stakes are high, when it has to be a HIT, in all capital letters, we overinvest. Our insistence that it be guaranteed to work almost ensures that it won\'t. Forcing something to be big makes it small.', author: '' },
-    { type: 'quote', content: 'If you can\'t explain something to a child, you don\'t understand it yourself.', author: '' },
-    { type: 'quote', content: 'The best propagandists convince people of a lie not by stating the lie directly but by making statements that tacitly assume the lie as a premise.', author: '' },
-    { type: 'quote', content: 'Conflict avoidance slowly rots your whole life', author: '' },
-    { type: 'quote', content: 'I know that it feels horrible to create from a place of defense. For example: you will find it exceedingly difficult to write if your motive is trying to convince people that you are not dumb, or not boring.', author: '' },
-    { type: 'quote', content: 'The story of German scientific forestry transmits a timeless truth: When we simplify complex systems, we destroy them, and the devastating consequences sometimes aren\'t obvious until it\'s too late.', author: '' },
-    { type: 'quote', content: 'Kill the reveal. We\'re not magicians. State your point and back it up like a normal person.', author: '' },
-    { type: 'quote', content: 'Outcomes over outputs', author: '' },
-    { type: 'quote', content: 'How would you write your brief if you could do it anonymously?', author: '' },
-    { type: 'quote', content: 'Why are we doing this?', author: '' },
-    { type: 'quote', content: 'What\'s the simplest explanation?', author: '' },
-    { type: 'quote', content: 'What reaction should all the creative achieve?', author: '' },
-    { type: 'quote', content: 'What\'s your most controversial opinion?', author: '' },
-    { type: 'quote', content: 'What little frictions exist that might bleed out the work if allowed to compound?', author: '' },
-    { type: 'quote', content: 'Are you solving a symptom or a cause?', author: '' },
-    { type: 'quote', content: 'What\'s the most ad hoc way you might solve this?', author: '' },
-    { type: 'quote', content: 'Who told you this was the right problem to solve?', author: '' },
-    { type: 'quote', content: 'Everyone has access to the same consumers. What does the brand have access to that nobody else does?', author: '' },
-    { type: 'quote', content: 'When was the last time you were wrong?', author: '' },
-    { type: 'quote', content: 'Where has there been compromise? What are the consequences?', author: '' },
-    { type: 'quote', content: 'Does your agency make money from the process or the output?', author: '' },
-    { type: 'quote', content: 'Do you have a point of view? If not, don\'t start the slides.', author: '' },
-    { type: 'quote', content: 'What\'s the weirdest thing you noticed today?', author: '' },
-    { type: 'quote', content: 'What\'s the stupidest question you don\'t know the answer to? Ask it.', author: '' },
-    { type: 'quote', content: 'How are you limited by the tools at your disposal? How are the tools dictating the process?', author: '' },
-    { type: 'quote', content: 'Are you being ruthlessly clear on what needs to be done?', author: '' },
-    { type: 'quote', content: 'Did you write it ugly before you wrote it nice?', author: '' },
-    { type: 'quote', content: 'What is the most enlightening thing you could do that might land you in jail?', author: '' },
-    { type: 'quote', content: 'Have you talked about it with anyone outside the industry?', author: '' },
-    { type: 'quote', content: 'What mood are they in when they buy?', author: '' },
-    { type: 'quote', content: 'Post review, ignore what they said – Why did they say it?', author: '' },
-    { type: 'quote', content: 'Of the 2,000 ads we see a day, 11% are actually remembered. 4% are remembered favorably. Will this route survive those odds?', author: '' },
-    { type: 'quote', content: 'What table are we playing at? Did we choose it?', author: '' },
-    { type: 'quote', content: 'When was the last time you casually browsed the things you have saved for future reference?', author: '' },
-    { type: 'quote', content: 'Is your research questioning the established authority?', author: '' },
-    { type: 'quote', content: 'How might this look from someone else\'s perspective?', author: '' },
-    { type: 'quote', content: 'Who do you care for? Who cares for you?', author: '' },
-    { type: 'quote', content: 'If we do everything right, what changes?', author: '' },
-    { type: 'quote', content: 'What are the arteries of the idea?', author: '' },
-    { type: 'quote', content: 'What allows the problem to occur?', author: '' },
-    { type: 'quote', content: 'How much sleep do you get?', author: '' },
-    { type: 'quote', content: 'When was the last time you were treated like the expert in the room? What was it you were the expert on?', author: '' },
-    { type: 'quote', content: 'What would have to be true? If _____ were true, we could…', author: '' },
-    { type: 'quote', content: 'What\'s the most relevant thing that is 100% offline?', author: '' },
-    { type: 'quote', content: 'What would genuinely shock the audience?', author: '' },
-    { type: 'quote', content: 'Are you having fun?', author: '' },
-    { type: 'quote', content: 'How often do you find yourself surprised?', author: '' },
-    { type: 'quote', content: 'What\'s the second most absurd thing you could do?', author: '' },
-    { type: 'quote', content: 'Who is the highest profile expert on the subject? Write them for a quote. You never know.', author: '' },
-    { type: 'quote', content: 'What would cause the most chaos?', author: '' },
-    { type: 'quote', content: 'Are you getting the time you need? Demand it.', author: '' },
-    { type: 'quote', content: 'How does telling people what you do for work make you feel?', author: '' },
-    { type: 'quote', content: 'What would happen if you went AWOL for a day?', author: '' },
-    { type: 'quote', content: 'What is currently bringing you hope?', author: '' },
-    { type: 'quote', content: 'In your free time, do you do activities or passivities?', author: '' },
-    { type: 'quote', content: 'What changes if you write it as a letter?', author: '' },
-    { type: 'quote', content: 'What are your hobbies?', author: '' },
-    { type: 'quote', content: 'What is your vision for the future?', author: '' },
-    { type: 'quote', content: 'What choices are yours alone?', author: '' },
-    { type: 'quote', content: 'Imagine you\'re an investigative journalist. How would you do your research?', author: '' },
-    { type: 'quote', content: 'What is the role of advertising?', author: '' },
-    { type: 'quote', content: 'What are the wild cards?', author: '' },
-    { type: 'quote', content: 'Which senior person do you plan to disappoint by not including because they\'re not good at this?', author: '' },
-    { type: 'quote', content: 'What did you decide to leave behind?', author: '' },
-    { type: 'quote', content: 'Where\'s the controversy?', author: '' },
-    { type: 'quote', content: 'Would a 12 year old understand it?', author: '' },
-    { type: 'quote', content: 'What concerns you?', author: '' },
-    { type: 'quote', content: 'In meetings: what do you do? Why are you here? Like right now?', author: '' },
-    { type: 'quote', content: 'What was the last thing you learned about yourself?', author: '' },
-    { type: 'quote', content: 'What are the relevant words / phrases? Gather them and translate to a variety of languages and then translate back to english.', author: '' },
-    { type: 'quote', content: 'When was the last time you and your CD had a heart to heart?', author: '' },
-    { type: 'quote', content: 'What will people walk out of the briefing having learned?', author: '' },
-    { type: 'quote', content: 'What has most surprised you?', author: '' },
-    { type: 'quote', content: 'Have you gone for a walk today?', author: '' },
-    { type: 'quote', content: 'What\'s holding you back?', author: '' },
-    { type: 'quote', content: 'What lesson do you refuse to learn?', author: '' },
-    { type: 'quote', content: 'What are the bigger social implications? How could this do less harm?', author: '' },
-    { type: 'quote', content: 'What has been the most persistent thought?', author: '' },
-    { type: 'quote', content: 'When was the last time you experienced something for the first time?', author: '' },
-    { type: 'quote', content: 'What can you do that would challenge social media behavior rather than adhere to it?', author: '' },
-    { type: 'quote', content: 'How do you steal time back from your job?', author: '' },
-    { type: 'quote', content: 'What are you holding onto because you like it, but does not actually add value?', author: '' },
-    { type: 'quote', content: 'What are you a student of?', author: '' },
-    { type: 'quote', content: 'What are you rebelling against?', author: '' },
-    { type: 'quote', content: 'What is your drug of choice?', author: '' },
-    { type: 'quote', content: 'What\'s the bare minimum?', author: '' },
-    { type: 'quote', content: 'What do you need?', author: '' },
-    { type: 'quote', content: 'So what?', author: '' },
-    { type: 'quote', content: 'What do you mean by that?', author: '' },
-    { type: 'quote', content: 'How could you make this more playful?', author: '' },
-    { type: 'quote', content: 'What will you do to make it uniquely yours?', author: '' },
-    { type: 'quote', content: 'What question haven\'t you asked?', author: '' },
-    { type: 'quote', content: 'What path haven\'t you considered?', author: '' },
-    { type: 'quote', content: 'What can you do today that you couldn\'t do a year ago?', author: '' },
-    { type: 'quote', content: 'What are you certain of?', author: '' },
-    { type: 'quote', content: 'What are you only pretending to be interested in?', author: '' },
-    { type: 'quote', content: 'What impact are you having?', author: '' },
-    { type: 'quote', content: 'What are you taking seriously? Stop it.', author: '' },
-    { type: 'quote', content: 'What would be the most deviant thing to do?', author: '' },
-    { type: 'quote', content: 'When do you lose track of time?', author: '' },
-    { type: 'quote', content: 'Are there people on your team who would back you up, even at their own expense?', author: '' },
-    { type: 'quote', content: 'When are you at your best?', author: '' },
-    { type: 'quote', content: 'Who are you without your job?', author: '' },
-    { type: 'quote', content: 'Now what?', author: '' }
-  ];
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
 
-  useEffect(() => {
-    loadCollection();
-    loadSubmissions();
-  }, []);
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-  const loadCollection = async () => {
-    try {
-      const result = await window.storage.get('inspiration-collection');
-      const loadedCollection = result ? JSON.parse(result.value) : null;
+    /* Navigation */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 3rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-primary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-logo {
+      height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-logo img {
+      height: 100%;
+      width: auto;
+    }
+
+    .nav-logo-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-menu {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-menu a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: color 0.2s ease;
+    }
+
+    .nav-menu a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-menu a.active {
+      color: var(--text-primary);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 3rem;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Intro Section */
+    .intro-section {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .intro-text {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      max-width: 600px;
+    }
+
+    /* Generate Button */
+    .generate-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1.25rem 3rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .generate-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .generate-btn:active {
+      transform: translateY(0);
+    }
+
+    .generate-btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* Content Display */
+    .content-display {
+      width: 100%;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.5s ease;
+      margin-bottom: 2rem;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .quote-display {
+      text-align: center;
+      max-width: 700px;
+    }
+
+    .quote-text {
+      font-size: 1.5rem;
+      line-height: 1.7;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .quote-text::before {
+      content: '"';
+      font-size: 4rem;
+      position: absolute;
+      top: -1.5rem;
+      left: -1rem;
+      color: var(--border);
+      font-family: Georgia, serif;
+    }
+
+    .quote-author {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .image-display {
+      max-width: 100%;
+      text-align: center;
+    }
+
+    .image-display img {
+      max-width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+      border: 1px solid var(--border);
+    }
+
+    .image-caption {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 2rem;
+    }
+
+    .modal {
+      background: var(--bg-primary);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2.5rem;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 0.5rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .form-input,
+    .form-textarea,
+    .form-select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: border-color 0.2s ease;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .form-radio-group {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .form-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .form-submit {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      width: 100%;
+    }
+
+    .form-submit:hover {
+      background: var(--accent-hover);
+    }
+
+    .form-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .form-message {
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .form-message.success {
+      background: rgba(45, 90, 61, 0.1);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+
+    .form-message.error {
+      background: rgba(139, 58, 58, 0.1);
+      color: var(--error);
+      border: 1px solid var(--error);
+    }
+
+    /* Image Upload */
+    .image-upload-area {
+      border: 2px dashed var(--border);
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+
+    .image-upload-area:hover {
+      border-color: var(--accent);
+    }
+
+    .image-upload-area.has-image {
+      border-style: solid;
+      padding: 1rem;
+    }
+
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+    }
+
+    .image-upload-text {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Manage Page */
+    .manage-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 3rem;
+      width: 100%;
+    }
+
+    .manage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .manage-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .manage-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .manage-tab {
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .manage-tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .content-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .content-card-type {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .content-card-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+
+    .content-card-author {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .content-card-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      margin-bottom: 0.75rem;
+    }
+
+    .content-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .content-tag {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .content-card-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .card-btn {
+      flex: 1;
+      padding: 0.5rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .card-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .card-btn.danger:hover {
+      background: var(--error);
+      border-color: var(--error);
+    }
+
+    .card-btn.success:hover {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state p {
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav {
+        padding: 1rem 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .nav-menu {
+        gap: 1rem;
+      }
+
+      .nav-menu a {
+        font-size: 0.75rem;
+      }
+
+      .main-content {
+        padding: 2rem 1.5rem;
+      }
+
+      .quote-text {
+        font-size: 1.2rem;
+        padding-left: 1.5rem;
+      }
+
+      .quote-text::before {
+        font-size: 3rem;
+        top: -1rem;
+        left: -0.5rem;
+      }
+
+      .manage-container {
+        padding: 1.5rem;
+      }
+
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Data export notice */
+    .data-notice {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+    }
+
+    .data-notice-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .data-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .data-btn {
+      padding: 0.5rem 1rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .data-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container" id="app">
+    <!-- Navigation -->
+    <nav class="nav">
+      <div class="nav-logo" id="nav-logo">
+        <span class="nav-logo-text">STRATEGY INSPIRATION</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="#" id="nav-submit">Submit</a></li>
+        <li><a href="#" id="nav-manage">Manage</a></li>
+        <li><a href="#" id="nav-newsletter" target="_blank">Newsletter</a></li>
+        <li><a href="#" id="nav-website" target="_blank">Website</a></li>
+      </ul>
+    </nav>
+
+    <!-- Home View -->
+    <main class="main-content" id="view-home">
+      <div class="intro-section" id="intro-section">
+        <p class="intro-text">
+          A curated collection of strategic wisdom, provocative insights, and visual inspiration 
+          gathered from the edges of culture and commerce. Click generate to spark your next breakthrough.
+        </p>
+      </div>
       
-      // If we have a stored collection, ensure all items have IDs
-      if (loadedCollection && loadedCollection.length > 0) {
-        const collectionWithIds = loadedCollection.map((item, idx) => ({
-          ...item,
-          _id: item._id || `item_${Date.now()}_${idx}`
-        }));
+      <div class="content-display hidden" id="content-display"></div>
+
+      <button class="generate-btn" id="generate-btn">Generate</button>
+    </main>
+
+    <!-- Manage View -->
+    <div class="manage-container hidden" id="view-manage"></div>
+  </div>
+
+  <!-- Submit Modal -->
+  <div class="modal-overlay hidden" id="submit-modal">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <h2 class="modal-title">Submit Inspiration</h2>
+      <form id="submit-form" name="submissions" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="submissions">
+        <p class="hidden">
+          <label>Don't fill this out: <input name="bot-field"></label>
+        </p>
         
-        // Only update storage if we added IDs
-        if (collectionWithIds.some(item => !loadedCollection.find(orig => orig._id === item._id))) {
-          await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
-        }
-        
-        setCollection(collectionWithIds);
-      } else {
-        // No stored collection, use initial collection with IDs
-        const collectionWithIds = initialCollection.map((item, idx) => ({
-          ...item,
-          _id: `item_${Date.now()}_${idx}`
-        }));
-        await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
-        setCollection(collectionWithIds);
-      }
-    } catch (error) {
-      console.error('Error loading collection:', error);
-      const collectionWithIds = initialCollection.map((item, idx) => ({
-        ...item,
-        _id: `item_${Date.now()}_${idx}`
-      }));
-      await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
-      setCollection(collectionWithIds);
-    }
-  };
-
-  const loadSubmissions = async () => {
-    try {
-      const result = await window.storage.get('submissions');
-      if (result) {
-        setSubmissions(JSON.parse(result.value));
-      }
-    } catch (error) {
-      console.error('Error loading submissions:', error);
-    }
-  };
-
-  const generateRandom = async () => {
-    setLoading(true);
-    try {
-      const result = await window.storage.get('inspiration-collection');
-      const currentCollection = result ? JSON.parse(result.value) : initialCollection;
-      
-      // Filter based on selected type
-      const filteredItems = generateFilter === 'all' 
-        ? currentCollection 
-        : currentCollection.filter(item => item.type === generateFilter);
-      
-      if (filteredItems.length === 0) {
-        alert(`No ${generateFilter === 'all' ? 'items' : generateFilter + 's'} found in collection.`);
-        setLoading(false);
-        return;
-      }
-      
-      const randomItem = filteredItems[Math.floor(Math.random() * filteredItems.length)];
-      
-      setTimeout(() => {
-        setCurrentItem(randomItem);
-        setLoading(false);
-      }, 300);
-    } catch (error) {
-      console.error('Error loading collection:', error);
-      const randomItem = initialCollection[Math.floor(Math.random() * initialCollection.length)];
-      setTimeout(() => {
-        setCurrentItem(randomItem);
-        setLoading(false);
-      }, 300);
-    }
-  };
-
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setPassword('');
-    } else {
-      alert('Incorrect password');
-    }
-  };
-
-  const handleDeleteItem = async (itemId) => {
-    console.log('Deleting item with ID:', itemId);
-    
-    setLoading(true);
-    try {
-      console.log('Current collection length:', collection.length);
-      
-      // Filter out by ID
-      const updatedCollection = collection.filter(item => item._id !== itemId);
-      
-      console.log('Updated collection length:', updatedCollection.length);
-      
-      // Update state
-      setCollection(updatedCollection);
-      
-      // Update storage
-      await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
-      
-      console.log('Delete successful');
-      setDeleteConfirm(null);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error deleting item:', error);
-      alert('Error deleting item: ' + error.message);
-      setLoading(false);
-    }
-  };
-
-  const handleApproveSubmission = async (submission) => {
-    const newItem = submission.type === 'quote' 
-      ? { type: 'quote', content: submission.content, author: submission.author || '' }
-      : { type: 'image', url: submission.imageUrl, description: submission.content || '' };
-    
-    const updatedCollection = [...collection, newItem];
-    setCollection(updatedCollection);
-    await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
-    
-    // Remove from submissions
-    const updatedSubmissions = submissions.filter(s => s.id !== submission.id);
-    setSubmissions(updatedSubmissions);
-    await window.storage.set('submissions', JSON.stringify(updatedSubmissions));
-  };
-
-  const handleRejectSubmission = async (submissionId) => {
-    const updatedSubmissions = submissions.filter(s => s.id !== submissionId);
-    setSubmissions(updatedSubmissions);
-    await window.storage.set('submissions', JSON.stringify(updatedSubmissions));
-  };
-
-  const handleAddNew = async (newItem) => {
-    const itemWithId = {
-      ...newItem,
-      _id: `item_${Date.now()}_${Math.random()}`
-    };
-    const updatedCollection = [...collection, itemWithId];
-    setCollection(updatedCollection);
-    await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
-    setEditingItem(null);
-    setImageFile(null);
-    setImagePreview(null);
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (file.size > 5000000) { // 5MB limit
-      alert('Image too large. Please use an image under 5MB.');
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target.result;
-      setImagePreview(base64);
-      setEditingItem({ ...editingItem, imageData: base64 });
-    };
-    reader.readAsDataURL(file);
-    setImageFile(file);
-  };
-
-  const handleBulkImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-    
-    setLoading(true);
-    const processedImages = [];
-    
-    for (const file of files) {
-      if (file.size > 5000000) {
-        console.warn(`Skipping ${file.name} - file too large`);
-        continue;
-      }
-      
-      try {
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (event) => resolve(event.target.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        
-        processedImages.push({
-          imageData: base64,
-          description: file.name.replace(/\.[^/.]+$/, ''), // filename without extension
-          preview: base64
-        });
-      } catch (error) {
-        console.error(`Error processing ${file.name}:`, error);
-      }
-    }
-    
-    setBulkImages(processedImages);
-    setLoading(false);
-  };
-
-  const handleSaveBulkImages = async () => {
-    setLoading(true);
-    try {
-      const newImages = bulkImages.map((img, idx) => ({
-        type: 'image',
-        imageData: img.imageData,
-        description: img.description,
-        _id: `item_${Date.now()}_${idx}`
-      }));
-      
-      const updatedCollection = [...collection, ...newImages];
-      setCollection(updatedCollection);
-      await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
-      
-      alert(`Successfully added ${newImages.length} images!`);
-      setBulkUploadMode(false);
-      setBulkImages([]);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error saving bulk images:', error);
-      alert('Error saving images: ' + error.message);
-      setLoading(false);
-    }
-  };
-
-  const handleEditItem = async (itemId, updatedItem) => {
-    const updatedCollection = collection.map(item => 
-      item._id === itemId ? { ...updatedItem, _id: itemId } : item
-    );
-    setCollection(updatedCollection);
-    await window.storage.set('inspiration-collection', JSON.stringify(updatedCollection));
-    setEditingItem(null);
-    setImageFile(null);
-    setImagePreview(null);
-  };
-
-  const handleResetCollection = async () => {
-    setLoading(true);
-    try {
-      // Get quotes that are in initialCollection but not in current collection
-      const existingContents = new Set(
-        collection
-          .filter(item => item.type === 'quote')
-          .map(item => `${item.content}|||${item.author || ''}`)
-      );
-      
-      const newQuotes = initialCollection.filter(initItem => {
-        const key = `${initItem.content}|||${initItem.author || ''}`;
-        return !existingContents.has(key);
-      });
-      
-      // Add IDs to new quotes
-      const newQuotesWithIds = newQuotes.map((item, idx) => ({
-        ...item,
-        _id: `item_${Date.now()}_${idx}`
-      }));
-      
-      // Merge with existing collection
-      const mergedCollection = [...collection, ...newQuotesWithIds];
-      
-      await window.storage.set('inspiration-collection', JSON.stringify(mergedCollection));
-      setCollection(mergedCollection);
-      setLoading(false);
-      
-      if (newQuotesWithIds.length > 0) {
-        alert(`Added ${newQuotesWithIds.length} missing quotes from original collection! Total: ${mergedCollection.length} items.`);
-      } else {
-        alert('No new quotes to add - your collection already contains all original items!');
-      }
-    } catch (error) {
-      console.error('Error merging collection:', error);
-      alert('Error merging collection: ' + error.message);
-      setLoading(false);
-    }
-  };
-
-  const handleForceReload = async () => {
-    if (!window.confirm('This will REPLACE your entire collection with the updated original (you will lose any custom additions or edits). Are you sure?')) {
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const collectionWithIds = initialCollection.map((item, idx) => ({
-        ...item,
-        _id: `item_${Date.now()}_${idx}`
-      }));
-      await window.storage.set('inspiration-collection', JSON.stringify(collectionWithIds));
-      setCollection(collectionWithIds);
-      setLoading(false);
-      alert(`Collection completely reloaded! Now contains ${collectionWithIds.length} items.`);
-    } catch (error) {
-      console.error('Error reloading collection:', error);
-      alert('Error reloading collection: ' + error.message);
-      setLoading(false);
-    }
-  };
-
-  const filteredCollection = collection.filter(item => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    if (item.type === 'quote') {
-      return item.content.toLowerCase().includes(search) || 
-             (item.author && item.author.toLowerCase().includes(search));
-    }
-    return item.description && item.description.toLowerCase().includes(search);
-  });
-
-  const handleSubmit = async () => {
-    if (submitForm.type === 'quote' && !submitForm.content) {
-      setSubmitStatus('error');
-      return;
-    }
-    if (submitForm.type === 'image' && !submitForm.imageUrl) {
-      setSubmitStatus('error');
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      const result = await window.storage.get('submissions');
-      const submissions = result ? JSON.parse(result.value) : [];
-      
-      const newSubmission = {
-        id: Date.now(),
-        ...submitForm,
-        timestamp: new Date().toISOString()
-      };
-      
-      submissions.push(newSubmission);
-      await window.storage.set('submissions', JSON.stringify(submissions));
-      
-      setSubmitStatus('success');
-      setSubmitForm({
-        type: 'quote',
-        content: '',
-        author: '',
-        imageUrl: '',
-        submittedBy: ''
-      });
-      
-      setTimeout(() => {
-        setSubmitStatus('');
-        setLoading(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Error submitting:', error);
-      setSubmitStatus('error');
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div style={{
-      fontFamily: "'IBM Plex Mono', monospace",
-      minHeight: '100vh',
-      background: '#fafafa',
-      position: 'relative'
-    }}>
-      {/* Navigation */}
-      <nav style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        background: '#fff',
-        borderBottom: '2px solid #000',
-        padding: '24px 32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 100
-      }}>
-        <div style={{
-          fontSize: '14px',
-          fontWeight: '600',
-          letterSpacing: '0.5px',
-          textTransform: 'uppercase'
-        }}>
-          Strategy Inspiration
-        </div>
-        <div style={{ display: 'flex', gap: '24px' }}>
-          <button
-            onClick={() => setView('generate')}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '13px',
-              fontFamily: "'IBM Plex Mono', monospace",
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              fontWeight: view === 'generate' ? '600' : '400',
-              textDecoration: view === 'generate' ? 'underline' : 'none',
-              textUnderlineOffset: '4px'
-            }}
-          >
-            Generate
-          </button>
-          <button
-            onClick={() => setView('submit')}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '13px',
-              fontFamily: "'IBM Plex Mono', monospace",
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              fontWeight: view === 'submit' ? '600' : '400',
-              textDecoration: view === 'submit' ? 'underline' : 'none',
-              textUnderlineOffset: '4px'
-            }}
-          >
-            Submit
-          </button>
-          <button
-            onClick={() => {
-              setView('admin');
-              if (!isAuthenticated) setPassword('');
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '13px',
-              fontFamily: "'IBM Plex Mono', monospace",
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              fontWeight: view === 'admin' ? '600' : '400',
-              textDecoration: view === 'admin' ? 'underline' : 'none',
-              textUnderlineOffset: '4px'
-            }}
-          >
-            Manage
-          </button>
-        </div>
-      </nav>
-
-      {/* Generate View */}
-      {view === 'generate' && (
-        <div style={{
-          paddingTop: '100px',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '100px 32px 32px'
-        }}>
-          {!currentItem && !loading && (
-            <div style={{
-              textAlign: 'center',
-              maxWidth: '600px'
-            }}>
-              <Lightbulb size={64} strokeWidth={1.5} style={{ marginBottom: '32px' }} />
-              <h1 style={{
-                fontSize: '24px',
-                fontWeight: '600',
-                marginBottom: '16px',
-                letterSpacing: '-0.5px'
-              }}>
-                Generate Random Inspiration
-              </h1>
-              <p style={{
-                fontSize: '14px',
-                lineHeight: '1.6',
-                color: '#666',
-                marginBottom: '24px'
-              }}>
-                Click the button below to pull a random quote or image from the collection
-              </p>
-              
-              {/* Filter Options */}
-              <div style={{
-                display: 'flex',
-                gap: '12px',
-                justifyContent: 'center',
-                marginBottom: '40px'
-              }}>
-                <button
-                  onClick={() => setGenerateFilter('all')}
-                  style={{
-                    background: generateFilter === 'all' ? '#000' : '#fff',
-                    color: generateFilter === 'all' ? '#fff' : '#000',
-                    border: '2px solid #000',
-                    padding: '8px 16px',
-                    fontSize: '12px',
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    fontWeight: '600'
-                  }}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setGenerateFilter('quote')}
-                  style={{
-                    background: generateFilter === 'quote' ? '#000' : '#fff',
-                    color: generateFilter === 'quote' ? '#fff' : '#000',
-                    border: '2px solid #000',
-                    padding: '8px 16px',
-                    fontSize: '12px',
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    fontWeight: '600'
-                  }}
-                >
-                  Quotes Only
-                </button>
-                <button
-                  onClick={() => setGenerateFilter('image')}
-                  style={{
-                    background: generateFilter === 'image' ? '#000' : '#fff',
-                    color: generateFilter === 'image' ? '#fff' : '#000',
-                    border: '2px solid #000',
-                    padding: '8px 16px',
-                    fontSize: '12px',
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    fontWeight: '600'
-                  }}
-                >
-                  Images Only
-                </button>
-              </div>
-            </div>
-          )}
-
-          {loading && (
-            <div style={{
-              fontSize: '14px',
-              color: '#666',
-              letterSpacing: '1px'
-            }}>
-              LOADING...
-            </div>
-          )}
-
-          {currentItem && !loading && (
-            <div style={{
-              width: '100%',
-              maxWidth: '900px',
-              animation: 'fadeIn 0.5s ease-in'
-            }}>
-              {currentItem.type === 'quote' ? (
-                <div style={{
-                  background: '#fff',
-                  border: '2px solid #000',
-                  padding: '64px 48px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{
-                    fontSize: '28px',
-                    lineHeight: '1.5',
-                    marginBottom: '32px',
-                    fontWeight: '400'
-                  }}>
-                    "{currentItem.content}"
-                  </div>
-                  {currentItem.author && (
-                    <div style={{
-                      fontSize: '14px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                      color: '#666'
-                    }}>
-                      — {currentItem.author}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{
-                  background: '#fff',
-                  border: '2px solid #000',
-                  overflow: 'hidden'
-                }}>
-                  {currentItem.imageData ? (
-                    <img 
-                      src={currentItem.imageData} 
-                      alt={currentItem.description || 'Inspiration image'}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        display: 'block'
-                      }}
-                    />
-                  ) : currentItem.url ? (
-                    <img 
-                      src={currentItem.url} 
-                      alt={currentItem.description || 'Inspiration image'}
-                      onError={(e) => {
-                        console.error('Image failed to load:', currentItem.url);
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = `
-                          <div style="padding: 48px; text-align: center;">
-                            <div style="font-size: 14px; margin-bottom: 16px; color: #666;">
-                              IMAGE FAILED TO LOAD
-                            </div>
-                            <div style="font-size: 12px; color: #999; word-break: break-all;">
-                              ${currentItem.url}
-                            </div>
-                          </div>
-                        `;
-                      }}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        display: 'block'
-                      }}
-                    />
-                  ) : (
-                    <div style={{ padding: '48px', textAlign: 'center', color: '#666' }}>
-                      No image data
-                    </div>
-                  )}
-                  {currentItem.description && (
-                    <div style={{
-                      padding: '24px',
-                      fontSize: '13px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      borderTop: '2px solid #000'
-                    }}>
-                      {currentItem.description}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={generateRandom}
-            disabled={loading}
-            style={{
-              marginTop: '48px',
-              background: '#000',
-              color: '#fff',
-              border: 'none',
-              padding: '16px 48px',
-              fontSize: '14px',
-              fontFamily: "'IBM Plex Mono', monospace",
-              cursor: loading ? 'not-allowed' : 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              fontWeight: '600',
-              transition: 'transform 0.2s',
-              opacity: loading ? 0.6 : 1
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) e.target.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'scale(1)';
-            }}
-          >
-            {currentItem ? 'Generate Another' : 'Generate'}
-          </button>
-        </div>
-      )}
-
-      {/* Submit View */}
-      {view === 'submit' && (
-        <div style={{
-          paddingTop: '100px',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '100px 32px 64px',
-          maxWidth: '700px',
-          margin: '0 auto'
-        }}>
-          <div style={{
-            width: '100%',
-            background: '#fff',
-            border: '2px solid #000',
-            padding: '48px'
-          }}>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}>
-              Submit Material
-            </h2>
-            <p style={{
-              fontSize: '13px',
-              color: '#666',
-              marginBottom: '32px',
-              lineHeight: '1.6'
-            }}>
-              Contribute a quote or image to the collection. Submissions will be reviewed before being added.
-            </p>
-
-            <div>
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  marginBottom: '8px',
-                  fontWeight: '600'
-                }}>
-                  Type
-                </label>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      value="quote"
-                      checked={submitForm.type === 'quote'}
-                      onChange={(e) => setSubmitForm({ ...submitForm, type: e.target.value })}
-                    />
-                    <span style={{ fontSize: '13px' }}>Quote</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      value="image"
-                      checked={submitForm.type === 'image'}
-                      onChange={(e) => setSubmitForm({ ...submitForm, type: e.target.value })}
-                    />
-                    <span style={{ fontSize: '13px' }}>Image</span>
-                  </label>
-                </div>
-              </div>
-
-              {submitForm.type === 'quote' ? (
-                <>
-                  <div style={{ marginBottom: '24px' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      marginBottom: '8px',
-                      fontWeight: '600'
-                    }}>
-                      Quote *
-                    </label>
-                    <textarea
-                      value={submitForm.content}
-                      onChange={(e) => setSubmitForm({ ...submitForm, content: e.target.value })}
-                      rows={4}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: '13px',
-                        border: '2px solid #000',
-                        background: '#fafafa',
-                        resize: 'vertical'
-                      }}
-                    />
-                  </div>
-                  <div style={{ marginBottom: '24px' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      marginBottom: '8px',
-                      fontWeight: '600'
-                    }}>
-                      Author
-                    </label>
-                    <input
-                      type="text"
-                      value={submitForm.author}
-                      onChange={(e) => setSubmitForm({ ...submitForm, author: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: '13px',
-                        border: '2px solid #000',
-                        background: '#fafafa'
-                      }}
-                    />
-                  </div>
-                </>
-              ) : (
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    marginBottom: '8px',
-                    fontWeight: '600'
-                  }}>
-                    Image URL *
-                  </label>
-                  <input
-                    type="url"
-                    value={submitForm.imageUrl}
-                    onChange={(e) => setSubmitForm({ ...submitForm, imageUrl: e.target.value })}
-                    placeholder="https://..."
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: '13px',
-                      border: '2px solid #000',
-                      background: '#fafafa'
-                    }}
-                  />
-                </div>
-              )}
-
-              <div style={{ marginBottom: '32px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  marginBottom: '8px',
-                  fontWeight: '600'
-                }}>
-                  Your Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={submitForm.submittedBy}
-                  onChange={(e) => setSubmitForm({ ...submitForm, submittedBy: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: '13px',
-                    border: '2px solid #000',
-                    background: '#fafafa'
-                  }}
-                />
-              </div>
-
-              {submitStatus === 'success' && (
-                <div style={{
-                  background: '#000',
-                  color: '#fff',
-                  padding: '16px',
-                  marginBottom: '24px',
-                  fontSize: '13px',
-                  textAlign: 'center',
-                  letterSpacing: '0.5px'
-                }}>
-                  SUBMITTED SUCCESSFULLY
-                </div>
-              )}
-
-              {submitStatus === 'error' && (
-                <div style={{
-                  background: '#ff0000',
-                  color: '#fff',
-                  padding: '16px',
-                  marginBottom: '24px',
-                  fontSize: '13px',
-                  textAlign: 'center',
-                  letterSpacing: '0.5px'
-                }}>
-                  ERROR: PLEASE FILL REQUIRED FIELDS
-                </div>
-              )}
-
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  background: '#000',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '16px',
-                  fontSize: '13px',
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  opacity: loading ? 0.6 : 1
-                }}
-              >
-                <Send size={16} />
-                Submit for Review
-              </button>
-            </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <div class="form-radio-group">
+            <label class="form-radio-label">
+              <input type="radio" name="type" value="quote" checked>
+              Quote
+            </label>
+            <label class="form-radio-label">
+              <input type="radio" name="type" value="image">
+              Image
+            </label>
           </div>
         </div>
-      )}
 
-      {/* Admin View */}
-      {view === 'admin' && (
-        <div style={{
-          paddingTop: '100px',
-          minHeight: '100vh',
-          padding: '100px 32px 64px',
-          maxWidth: '1200px',
-          margin: '0 auto'
-        }}>
-          {!isAuthenticated ? (
-            <div style={{
-              maxWidth: '500px',
-              margin: '0 auto',
-              background: '#fff',
-              border: '2px solid #000',
-              padding: '48px'
-            }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                marginBottom: '24px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                Admin Login
-              </h2>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                placeholder="Enter password"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: '13px',
-                  border: '2px solid #000',
-                  background: '#fafafa',
-                  marginBottom: '16px'
-                }}
-              />
-              <button
-                onClick={handleLogin}
-                style={{
-                  width: '100%',
-                  background: '#000',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '16px',
-                  fontSize: '13px',
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  cursor: 'pointer',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: '600'
-                }}
-              >
-                Login
-              </button>
-            </div>
-          ) : (
-            <div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '32px',
-                gap: '16px',
-                flexWrap: 'wrap'
-              }}>
-                <h2 style={{
-                  fontSize: '20px',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>
-                  Manage Collection ({collection.length} items)
-                </h2>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search..."
-                    style={{
-                      padding: '8px 12px',
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: '13px',
-                      border: '2px solid #000',
-                      background: '#fafafa'
-                    }}
-                  />
-                  <button
-                    onClick={handleResetCollection}
-                    disabled={loading}
-                    style={{
-                      background: '#666',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '8px 16px',
-                      fontSize: '12px',
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontWeight: '600',
-                      opacity: loading ? 0.6 : 1
-                    }}
-                  >
-                    Merge Original
-                  </button>
-                  <button
-                    onClick={handleForceReload}
-                    disabled={loading}
-                    style={{
-                      background: '#ff6600',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '8px 16px',
-                      fontSize: '12px',
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontWeight: '600',
-                      opacity: loading ? 0.6 : 1
-                    }}
-                  >
-                    Force Reload
-                  </button>
-                  <button
-                    onClick={() => setEditingItem({ type: 'quote', content: '', author: '', isNew: true })}
-                    style={{
-                      background: '#000',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '8px 16px',
-                      fontSize: '12px',
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      cursor: 'pointer',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    + Add New
-                  </button>
-                  <button
-                    onClick={() => setBulkUploadMode(true)}
-                    style={{
-                      background: '#000',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '8px 16px',
-                      fontSize: '12px',
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      cursor: 'pointer',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    + Bulk Upload Images
-                  </button>
-                </div>
-              </div>
-
-              {/* Submissions Section */}
-              {submissions.length > 0 && (
-                <div style={{ marginBottom: '48px' }}>
-                  <h3 style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    marginBottom: '16px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Pending Submissions ({submissions.length})
-                  </h3>
-                  {submissions.map((sub) => (
-                    <div key={sub.id} style={{
-                      background: '#fff',
-                      border: '2px solid #000',
-                      padding: '24px',
-                      marginBottom: '16px'
-                    }}>
-                      <div style={{ marginBottom: '16px' }}>
-                        <span style={{
-                          fontSize: '11px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          color: '#666'
-                        }}>
-                          {sub.type} • Submitted by {sub.submittedBy || 'Anonymous'}
-                        </span>
-                      </div>
-                      {sub.type === 'quote' ? (
-                        <>
-                          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-                            "{sub.content}"
-                          </div>
-                          {sub.author && (
-                            <div style={{ fontSize: '12px', color: '#666' }}>
-                              — {sub.author}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div style={{ fontSize: '14px' }}>
-                          Image: {sub.imageUrl}
-                        </div>
-                      )}
-                      <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
-                        <button
-                          onClick={() => handleApproveSubmission(sub)}
-                          style={{
-                            background: '#000',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '8px 16px',
-                            fontSize: '11px',
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            cursor: 'pointer',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleRejectSubmission(sub.id)}
-                          style={{
-                            background: '#fff',
-                            color: '#000',
-                            border: '2px solid #000',
-                            padding: '8px 16px',
-                            fontSize: '11px',
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            cursor: 'pointer',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Bulk Upload Modal */}
-              {bulkUploadMode && (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(0,0,0,0.8)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1000,
-                  padding: '32px'
-                }}>
-                  <div style={{
-                    background: '#fff',
-                    border: '2px solid #000',
-                    padding: '48px',
-                    maxWidth: '800px',
-                    width: '100%',
-                    maxHeight: '80vh',
-                    overflow: 'auto'
-                  }}>
-                    <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      marginBottom: '24px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Bulk Upload Images
-                    </h3>
-                    
-                    {bulkImages.length === 0 ? (
-                      <>
-                        <p style={{
-                          fontSize: '13px',
-                          marginBottom: '24px',
-                          lineHeight: '1.6',
-                          color: '#666'
-                        }}>
-                          Select multiple images to upload at once. Each image must be under 5MB.
-                        </p>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleBulkImageUpload}
-                          disabled={loading}
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: '13px',
-                            border: '2px solid #000',
-                            background: '#fafafa',
-                            marginBottom: '24px'
-                          }}
-                        />
-                        {loading && (
-                          <div style={{
-                            fontSize: '13px',
-                            color: '#666',
-                            textAlign: 'center',
-                            padding: '24px'
-                          }}>
-                            Processing images...
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <p style={{
-                          fontSize: '13px',
-                          marginBottom: '24px',
-                          color: '#666'
-                        }}>
-                          {bulkImages.length} images ready to upload. You can edit descriptions below.
-                        </p>
-                        <div style={{
-                          maxHeight: '400px',
-                          overflow: 'auto',
-                          marginBottom: '24px'
-                        }}>
-                          {bulkImages.map((img, idx) => (
-                            <div key={idx} style={{
-                              border: '2px solid #000',
-                              padding: '16px',
-                              marginBottom: '16px',
-                              display: 'flex',
-                              gap: '16px',
-                              alignItems: 'flex-start'
-                            }}>
-                              <img 
-                                src={img.preview} 
-                                alt={`Preview ${idx + 1}`}
-                                style={{
-                                  width: '100px',
-                                  height: '100px',
-                                  objectFit: 'cover',
-                                  border: '1px solid #ccc'
-                                }}
-                              />
-                              <div style={{ flex: 1 }}>
-                                <label style={{
-                                  display: 'block',
-                                  fontSize: '11px',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.5px',
-                                  marginBottom: '8px',
-                                  fontWeight: '600'
-                                }}>
-                                  Description
-                                </label>
-                                <input
-                                  type="text"
-                                  value={img.description}
-                                  onChange={(e) => {
-                                    const updated = [...bulkImages];
-                                    updated[idx].description = e.target.value;
-                                    setBulkImages(updated);
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    padding: '8px',
-                                    fontFamily: "'IBM Plex Mono', monospace",
-                                    fontSize: '12px',
-                                    border: '2px solid #000',
-                                    background: '#fafafa'
-                                  }}
-                                />
-                              </div>
-                              <button
-                                onClick={() => {
-                                  const updated = bulkImages.filter((_, i) => i !== idx);
-                                  setBulkImages(updated);
-                                }}
-                                style={{
-                                  background: '#ff0000',
-                                  color: '#fff',
-                                  border: 'none',
-                                  padding: '8px 12px',
-                                  fontSize: '11px',
-                                  fontFamily: "'IBM Plex Mono', monospace",
-                                  cursor: 'pointer',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.5px'
-                                }}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                    
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      {bulkImages.length > 0 && (
-                        <button
-                          onClick={handleSaveBulkImages}
-                          disabled={loading}
-                          style={{
-                            flex: 1,
-                            background: '#000',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '16px',
-                            fontSize: '13px',
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
-                            fontWeight: '600',
-                            opacity: loading ? 0.6 : 1
-                          }}
-                        >
-                          {loading ? 'Uploading...' : `Upload ${bulkImages.length} Images`}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => {
-                          setBulkUploadMode(false);
-                          setBulkImages([]);
-                        }}
-                        disabled={loading}
-                        style={{
-                          flex: 1,
-                          background: '#fff',
-                          color: '#000',
-                          border: '2px solid #000',
-                          padding: '16px',
-                          fontSize: '13px',
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Delete Confirmation Modal */}
-              {deleteConfirm && (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(0,0,0,0.8)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1000,
-                  padding: '32px'
-                }}>
-                  <div style={{
-                    background: '#fff',
-                    border: '2px solid #000',
-                    padding: '48px',
-                    maxWidth: '500px',
-                    width: '100%'
-                  }}>
-                    <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      marginBottom: '16px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Confirm Delete
-                    </h3>
-                    <p style={{
-                      fontSize: '14px',
-                      marginBottom: '32px',
-                      lineHeight: '1.6'
-                    }}>
-                      Are you sure you want to delete this item? This action cannot be undone.
-                    </p>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button
-                        onClick={() => handleDeleteItem(deleteConfirm)}
-                        disabled={loading}
-                        style={{
-                          flex: 1,
-                          background: '#ff0000',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '16px',
-                          fontSize: '13px',
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                          fontWeight: '600',
-                          opacity: loading ? 0.6 : 1
-                        }}
-                      >
-                        {loading ? 'Deleting...' : 'Delete'}
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(null)}
-                        disabled={loading}
-                        style={{
-                          flex: 1,
-                          background: '#fff',
-                          color: '#000',
-                          border: '2px solid #000',
-                          padding: '16px',
-                          fontSize: '13px',
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Edit/Add Modal */}
-              {editingItem && (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(0,0,0,0.8)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1000,
-                  padding: '32px'
-                }}>
-                  <div style={{
-                    background: '#fff',
-                    border: '2px solid #000',
-                    padding: '48px',
-                    maxWidth: '600px',
-                    width: '100%',
-                    maxHeight: '80vh',
-                    overflow: 'auto'
-                  }}>
-                    <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      marginBottom: '24px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      {editingItem.isNew ? 'Add New Item' : 'Edit Item'}
-                    </h3>
-                    
-                    <div style={{ marginBottom: '24px' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '12px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        marginBottom: '8px',
-                        fontWeight: '600'
-                      }}>
-                        Type
-                      </label>
-                      <div style={{ display: 'flex', gap: '16px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input
-                            type="radio"
-                            checked={editingItem.type === 'quote'}
-                            onChange={() => setEditingItem({ ...editingItem, type: 'quote' })}
-                          />
-                          <span style={{ fontSize: '13px' }}>Quote</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input
-                            type="radio"
-                            checked={editingItem.type === 'image'}
-                            onChange={() => setEditingItem({ ...editingItem, type: 'image' })}
-                          />
-                          <span style={{ fontSize: '13px' }}>Image</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {editingItem.type === 'quote' ? (
-                      <>
-                        <div style={{ marginBottom: '24px' }}>
-                          <label style={{
-                            display: 'block',
-                            fontSize: '12px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '8px',
-                            fontWeight: '600'
-                          }}>
-                            Quote *
-                          </label>
-                          <textarea
-                            value={editingItem.content || ''}
-                            onChange={(e) => setEditingItem({ ...editingItem, content: e.target.value })}
-                            rows={4}
-                            style={{
-                              width: '100%',
-                              padding: '12px',
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: '13px',
-                              border: '2px solid #000',
-                              background: '#fafafa',
-                              resize: 'vertical'
-                            }}
-                          />
-                        </div>
-                        <div style={{ marginBottom: '24px' }}>
-                          <label style={{
-                            display: 'block',
-                            fontSize: '12px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '8px',
-                            fontWeight: '600'
-                          }}>
-                            Author
-                          </label>
-                          <input
-                            type="text"
-                            value={editingItem.author || ''}
-                            onChange={(e) => setEditingItem({ ...editingItem, author: e.target.value })}
-                            style={{
-                              width: '100%',
-                              padding: '12px',
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: '13px',
-                              border: '2px solid #000',
-                              background: '#fafafa'
-                            }}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{ marginBottom: '24px' }}>
-                          <label style={{
-                            display: 'block',
-                            fontSize: '12px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '8px',
-                            fontWeight: '600'
-                          }}>
-                            Upload Image *
-                          </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            style={{
-                              width: '100%',
-                              padding: '12px',
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: '13px',
-                              border: '2px solid #000',
-                              background: '#fafafa'
-                            }}
-                          />
-                          <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
-                            Maximum file size: 5MB. Supports JPG, PNG, GIF.
-                          </div>
-                        </div>
-                        
-                        {(imagePreview || editingItem.imageData) && (
-                          <div style={{ marginBottom: '24px' }}>
-                            <label style={{
-                              display: 'block',
-                              fontSize: '12px',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginBottom: '8px',
-                              fontWeight: '600'
-                            }}>
-                              Preview
-                            </label>
-                            <img 
-                              src={imagePreview || editingItem.imageData} 
-                              alt="Preview"
-                              style={{
-                                width: '100%',
-                                maxHeight: '300px',
-                                objectFit: 'contain',
-                                border: '2px solid #000',
-                                background: '#fafafa'
-                              }}
-                            />
-                          </div>
-                        )}
-                        
-                        <div style={{ marginBottom: '24px' }}>
-                          <label style={{
-                            display: 'block',
-                            fontSize: '12px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '8px',
-                            fontWeight: '600'
-                          }}>
-                            Description (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            value={editingItem.description || ''}
-                            onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                            style={{
-                              width: '100%',
-                              padding: '12px',
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: '13px',
-                              border: '2px solid #000',
-                              background: '#fafafa'
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button
-                        onClick={() => {
-                          // Validate before saving
-                          if (editingItem.type === 'quote' && !editingItem.content) {
-                            alert('Please enter quote content');
-                            return;
-                          }
-                          if (editingItem.type === 'image' && !editingItem.imageData && !editingItem.url) {
-                            alert('Please upload an image');
-                            return;
-                          }
-                          
-                          if (editingItem.isNew) {
-                            const { isNew, ...newItem } = editingItem;
-                            handleAddNew(newItem);
-                          } else {
-                            handleEditItem(editingItem._id, editingItem);
-                          }
-                        }}
-                        style={{
-                          flex: 1,
-                          background: '#000',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '16px',
-                          fontSize: '13px',
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          cursor: 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingItem(null);
-                          setImageFile(null);
-                          setImagePreview(null);
-                        }}
-                        style={{
-                          flex: 1,
-                          background: '#fff',
-                          color: '#000',
-                          border: '2px solid #000',
-                          padding: '16px',
-                          fontSize: '13px',
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          cursor: 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Collection List */}
-              <div>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  marginBottom: '16px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>
-                  Current Collection
-                </h3>
-                {filteredCollection.map((item) => {
-                  return (
-                  <div key={item._id} style={{
-                    background: '#fff',
-                    border: '2px solid #000',
-                    padding: '24px',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: '16px'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: '8px' }}>
-                        <span style={{
-                          fontSize: '11px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          color: '#666'
-                        }}>
-                          {item.type}
-                        </span>
-                      </div>
-                      {item.type === 'quote' ? (
-                        <>
-                          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-                            "{item.content}"
-                          </div>
-                          {item.author && (
-                            <div style={{ fontSize: '12px', color: '#666' }}>
-                              — {item.author}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-                            {item.description || 'Image'}
-                          </div>
-                          {item.imageData && (
-                            <img 
-                              src={item.imageData} 
-                              alt={item.description || 'Preview'}
-                              style={{
-                                maxWidth: '200px',
-                                maxHeight: '150px',
-                                objectFit: 'contain',
-                                marginTop: '8px',
-                                border: '1px solid #ccc'
-                              }}
-                            />
-                          )}
-                          {item.url && !item.imageData && (
-                            <div style={{ fontSize: '12px', color: '#666', wordBreak: 'break-all' }}>
-                              {item.url}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                      <button
-                        onClick={() => {
-                          setEditingItem({ ...item });
-                        }}
-                        style={{
-                          background: '#fff',
-                          color: '#000',
-                          border: '2px solid #000',
-                          padding: '6px 12px',
-                          fontSize: '11px',
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          cursor: 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          console.log('Delete button clicked for item:', item._id);
-                          setDeleteConfirm(item._id);
-                        }}
-                        disabled={loading}
-                        style={{
-                          background: '#ff0000',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '6px 12px',
-                          fontSize: '11px',
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          opacity: loading ? 0.6 : 1
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-                })}
-              </div>
-            </div>
-          )}
+        <div class="form-group" id="quote-fields">
+          <label class="form-label">Quote</label>
+          <textarea class="form-textarea" name="content" placeholder="Enter the quote..."></textarea>
         </div>
-      )}
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap');
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-      `}</style>
+        <div class="form-group" id="author-field">
+          <label class="form-label">Author (optional)</label>
+          <input type="text" class="form-input" name="author" placeholder="Who said this?">
+        </div>
+
+        <div class="form-group hidden" id="image-fields">
+          <label class="form-label">Image</label>
+          <div class="image-upload-area" id="submit-image-upload">
+            <p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>
+          </div>
+          <input type="file" id="submit-image-input" name="image" accept="image/*" class="hidden">
+          <input type="hidden" name="imageData" id="submit-image-data">
+          <div style="margin-top: 0.75rem;">
+            <label class="form-label">Caption (optional)</label>
+            <input type="text" class="form-input" name="caption" placeholder="Describe the image...">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your Name (optional)</label>
+          <input type="text" class="form-input" name="submittedBy" placeholder="For attribution...">
+        </div>
+
+        <button type="submit" class="form-submit">Submit for Review</button>
+        <div class="form-message hidden" id="submit-message"></div>
+      </form>
     </div>
-  );
-};
+  </div>
 
-export default InspirationGenerator;
+  <!-- Password Modal -->
+  <div class="modal-overlay hidden" id="password-modal">
+    <div class="modal" style="max-width: 400px;">
+      <button class="modal-close" id="password-modal-close">&times;</button>
+      <h2 class="modal-title">Admin Access</h2>
+      <form id="password-form">
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="admin-password" placeholder="Enter password...">
+        </div>
+        <button type="submit" class="form-submit">Access</button>
+        <div class="form-message hidden" id="password-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay hidden" id="edit-modal">
+    <div class="modal">
+      <button class="modal-close" id="edit-modal-close">&times;</button>
+      <h2 class="modal-title" id="edit-modal-title">Edit Content</h2>
+      <form id="edit-form">
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="edit-type">
+        
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <div class="form-radio-group">
+            <label class="form-radio-label">
+              <input type="radio" name="edit-type-radio" value="quote" id="edit-type-quote">
+              Quote
+            </label>
+            <label class="form-radio-label">
+              <input type="radio" name="edit-type-radio" value="image" id="edit-type-image">
+              Image
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="edit-quote-fields">
+          <label class="form-label">Quote</label>
+          <textarea class="form-textarea" id="edit-content"></textarea>
+        </div>
+
+        <div class="form-group" id="edit-author-field">
+          <label class="form-label">Author</label>
+          <input type="text" class="form-input" id="edit-author">
+        </div>
+
+        <div class="form-group hidden" id="edit-image-fields">
+          <label class="form-label">Image</label>
+          <div class="image-upload-area" id="edit-image-upload">
+            <p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>
+          </div>
+          <input type="file" id="edit-image-input" accept="image/*" class="hidden">
+          <input type="hidden" id="edit-image-data">
+          <label class="form-label" style="margin-top: 0.75rem;">Caption</label>
+          <input type="text" class="form-input" id="edit-caption">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags (comma-separated)</label>
+          <input type="text" class="form-input" id="edit-tags" placeholder="strategy, insight, culture...">
+        </div>
+
+        <button type="submit" class="form-submit">Save</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // CONFIGURATION - UPDATE THESE VALUES
+    // =====================================================
+    
+    const CONFIG = {
+      // Admin password for the Manage section
+      adminPassword: "crapscraps2025",
+      
+      // External links
+      newsletterUrl: "https://stratscraps.substack.com/",
+      websiteUrl: "https:alexmorris.co",
+      
+      // Logo image path (relative to index.html, or set to null for text)
+      logoPath: null, // e.g., "./logo.png"
+      logoText: "STRATEGY SPARK SHUFFLER"
+    };
+
+    // =====================================================
+    // INITIAL CONTENT - Edit this to add your starting content
+    // Images should be base64 encoded (data:image/...) for universal visibility
+    // =====================================================
+    
+    const INITIAL_CONTENT = [
+      { 
+        id: "1", 
+        type: "quote", 
+        content: "Strategy and tactics without diagnosis is just panic.", 
+        author: "", 
+        tags: ["strategy"],
+        status: "approved"
+      },
+      { 
+        id: "2", 
+        type: "quote", 
+        content: "A single data point is almost always useless. Insight comes from one point in comparison to another.", 
+        author: "", 
+        tags: ["insight"],
+        status: "approved"
+      },
+      { 
+        id: "3", 
+        type: "quote", 
+        content: "Simplify, Then Exaggerate", 
+        author: "", 
+        tags: ["creative"],
+        status: "approved"
+      },
+      { 
+        id: "4", 
+        type: "quote", 
+        content: "Most geniuses prosper not by deconstructing intricate complexities but by exploiting unrecognized simplicities.", 
+        author: "Andy Benoit", 
+        tags: ["strategy"],
+        status: "approved"
+      },
+      { 
+        id: "5", 
+        type: "quote", 
+        content: "Culture eats strategy for breakfast.", 
+        author: "Peter Drucker", 
+        tags: ["culture", "strategy"],
+        status: "approved"
+      },
+      { 
+        id: "6", 
+        type: "quote", 
+        content: "The goal of marketing is making sure that the message taints the tastelessness of existence, and forces us to pay attention.", 
+        author: "", 
+        tags: ["marketing"],
+        status: "approved"
+      },
+      { 
+        id: "7", 
+        type: "quote", 
+        content: "Extreme principles can lead to extreme clarity.", 
+        author: "", 
+        tags: ["strategy"],
+        status: "approved"
+      },
+      { 
+        id: "8", 
+        type: "quote", 
+        content: "What conventions Must you break? What conventions could you break? What conventions should you NOT break?", 
+        author: "", 
+        tags: ["creative", "strategy"],
+        status: "approved"
+      }
+    ];
+
+    // =====================================================
+    // STATE MANAGEMENT
+    // =====================================================
+    
+    const STORAGE_KEY = 'strategy-inspiration-content';
+    
+    const state = {
+      isAuthenticated: false,
+      currentView: 'home',
+      content: [],
+      currentItem: null,
+      manageTab: 'content'
+    };
+
+    // =====================================================
+    // DOM ELEMENTS
+    // =====================================================
+    
+    const elements = {
+      navLogo: document.getElementById('nav-logo'),
+      navSubmit: document.getElementById('nav-submit'),
+      navManage: document.getElementById('nav-manage'),
+      navNewsletter: document.getElementById('nav-newsletter'),
+      navWebsite: document.getElementById('nav-website'),
+      viewHome: document.getElementById('view-home'),
+      viewManage: document.getElementById('view-manage'),
+      introSection: document.getElementById('intro-section'),
+      contentDisplay: document.getElementById('content-display'),
+      generateBtn: document.getElementById('generate-btn'),
+      submitModal: document.getElementById('submit-modal'),
+      submitForm: document.getElementById('submit-form'),
+      submitMessage: document.getElementById('submit-message'),
+      modalClose: document.getElementById('modal-close'),
+      passwordModal: document.getElementById('password-modal'),
+      passwordForm: document.getElementById('password-form'),
+      passwordMessage: document.getElementById('password-message'),
+      passwordModalClose: document.getElementById('password-modal-close'),
+      editModal: document.getElementById('edit-modal'),
+      editForm: document.getElementById('edit-form'),
+      editModalClose: document.getElementById('edit-modal-close'),
+      quoteFields: document.getElementById('quote-fields'),
+      authorField: document.getElementById('author-field'),
+      imageFields: document.getElementById('image-fields'),
+      submitImageUpload: document.getElementById('submit-image-upload'),
+      submitImageInput: document.getElementById('submit-image-input'),
+      submitImageData: document.getElementById('submit-image-data'),
+      editImageUpload: document.getElementById('edit-image-upload'),
+      editImageInput: document.getElementById('edit-image-input'),
+      editImageData: document.getElementById('edit-image-data')
+    };
+
+    // =====================================================
+    // INITIALIZATION
+    // =====================================================
+    
+    function init() {
+      // Set external links
+      elements.navNewsletter.href = CONFIG.newsletterUrl;
+      elements.navWebsite.href = CONFIG.websiteUrl;
+      
+      // Set logo
+      if (CONFIG.logoPath) {
+        elements.navLogo.innerHTML = `<img src="${CONFIG.logoPath}" alt="Logo">`;
+      } else {
+        elements.navLogo.innerHTML = `<span class="nav-logo-text">${CONFIG.logoText}</span>`;
+      }
+      
+      // Load content
+      loadContent();
+      
+      // Set up event listeners
+      setupEventListeners();
+    }
+
+    function setupEventListeners() {
+      // Navigation
+      elements.navLogo.addEventListener('click', () => showView('home'));
+      elements.navSubmit.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal('submit');
+      });
+      elements.navManage.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (state.isAuthenticated) {
+          showView('manage');
+        } else {
+          openModal('password');
+        }
+      });
+
+      // Generate button
+      elements.generateBtn.addEventListener('click', generateRandom);
+
+      // Submit form type toggle
+      document.querySelectorAll('input[name="type"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          const isImage = e.target.value === 'image';
+          elements.quoteFields.classList.toggle('hidden', isImage);
+          elements.authorField.classList.toggle('hidden', isImage);
+          elements.imageFields.classList.toggle('hidden', !isImage);
+        });
+      });
+
+      // Edit form type toggle
+      document.querySelectorAll('input[name="edit-type-radio"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          const isImage = e.target.value === 'image';
+          document.getElementById('edit-quote-fields').classList.toggle('hidden', isImage);
+          document.getElementById('edit-author-field').classList.toggle('hidden', isImage);
+          document.getElementById('edit-image-fields').classList.toggle('hidden', !isImage);
+          document.getElementById('edit-type').value = e.target.value;
+        });
+      });
+
+      // Image upload for submit form
+      elements.submitImageUpload.addEventListener('click', () => {
+        elements.submitImageInput.click();
+      });
+      elements.submitImageInput.addEventListener('change', (e) => {
+        handleImageUpload(e, 'submit');
+      });
+
+      // Image upload for edit form
+      elements.editImageUpload.addEventListener('click', () => {
+        elements.editImageInput.click();
+      });
+      elements.editImageInput.addEventListener('change', (e) => {
+        handleImageUpload(e, 'edit');
+      });
+
+      // Submit form (using Netlify forms for submissions)
+      elements.submitForm.addEventListener('submit', handleSubmission);
+
+      // Password form
+      elements.passwordForm.addEventListener('submit', handlePasswordSubmit);
+
+      // Edit form
+      elements.editForm.addEventListener('submit', handleEditSubmit);
+
+      // Modal close buttons
+      elements.modalClose.addEventListener('click', () => closeModal('submit'));
+      elements.passwordModalClose.addEventListener('click', () => closeModal('password'));
+      elements.editModalClose.addEventListener('click', () => closeModal('edit'));
+
+      // Close modals on overlay click
+      document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) {
+            overlay.classList.add('hidden');
+          }
+        });
+      });
+    }
+
+    // =====================================================
+    // IMAGE HANDLING - Base64 encoding for universal visibility
+    // =====================================================
+    
+    function handleImageUpload(e, formType) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
+        alert('Please upload a JPG, PNG, GIF, or WebP image.');
+        return;
+      }
+
+      // Validate file size (2MB max for reasonable localStorage storage)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image too large. Please use an image under 2MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target.result;
+        
+        if (formType === 'submit') {
+          elements.submitImageData.value = base64;
+          elements.submitImageUpload.innerHTML = `<img src="${base64}" class="image-preview" alt="Preview">`;
+          elements.submitImageUpload.classList.add('has-image');
+        } else {
+          elements.editImageData.value = base64;
+          elements.editImageUpload.innerHTML = `<img src="${base64}" class="image-preview" alt="Preview">`;
+          elements.editImageUpload.classList.add('has-image');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // =====================================================
+    // CONTENT MANAGEMENT
+    // =====================================================
+    
+    function loadContent() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          state.content = JSON.parse(stored);
+        } catch (e) {
+          console.error('Error parsing stored content:', e);
+          state.content = [...INITIAL_CONTENT];
+          saveContent();
+        }
+      } else {
+        state.content = [...INITIAL_CONTENT];
+        saveContent();
+      }
+    }
+
+    function saveContent() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.content));
+      } catch (e) {
+        console.error('Error saving content:', e);
+        // If localStorage is full, alert the user
+        if (e.name === 'QuotaExceededError') {
+          alert('Storage is full. Try removing some images or exporting your data.');
+        }
+      }
+    }
+
+    function generateRandom() {
+      const approved = state.content.filter(c => c.status === 'approved');
+      
+      if (approved.length === 0) {
+        alert('No content available. Add some in the Manage section!');
+        return;
+      }
+
+      elements.generateBtn.classList.add('loading');
+      elements.generateBtn.innerHTML = '<span class="spinner"></span>Generating...';
+
+      setTimeout(() => {
+        const randomIndex = Math.floor(Math.random() * approved.length);
+        state.currentItem = approved[randomIndex];
+        
+        renderCurrentItem();
+        
+        elements.generateBtn.classList.remove('loading');
+        elements.generateBtn.textContent = 'Generate';
+      }, 300);
+    }
+
+    function renderCurrentItem() {
+      elements.introSection.classList.add('hidden');
+      elements.contentDisplay.classList.remove('hidden');
+      
+      const item = state.currentItem;
+      
+      if (item.type === 'quote') {
+        elements.contentDisplay.innerHTML = `
+          <div class="quote-display" style="animation: fadeIn 0.5s ease">
+            <p class="quote-text">${escapeHtml(item.content)}</p>
+            ${item.author ? `<p class="quote-author">— ${escapeHtml(item.author)}</p>` : ''}
+          </div>
+        `;
+      } else if (item.type === 'image') {
+        elements.contentDisplay.innerHTML = `
+          <div class="image-display" style="animation: fadeIn 0.5s ease">
+            <img src="${item.imageData}" alt="${escapeHtml(item.caption || 'Inspiration image')}">
+            ${item.caption ? `<p class="image-caption">${escapeHtml(item.caption)}</p>` : ''}
+          </div>
+        `;
+      }
+    }
+
+    // =====================================================
+    // VIEW MANAGEMENT
+    // =====================================================
+    
+    function showView(view) {
+      state.currentView = view;
+      
+      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
+      
+      if (view === 'home') {
+        elements.viewHome.classList.remove('hidden');
+        elements.viewManage.classList.add('hidden');
+        resetHomeView();
+      } else if (view === 'manage') {
+        elements.viewHome.classList.add('hidden');
+        elements.viewManage.classList.remove('hidden');
+        elements.navManage.classList.add('active');
+        renderManageView();
+      }
+    }
+
+    function resetHomeView() {
+      elements.introSection.classList.remove('hidden');
+      elements.contentDisplay.classList.add('hidden');
+      elements.contentDisplay.innerHTML = '';
+      state.currentItem = null;
+    }
+
+    function openModal(type) {
+      if (type === 'submit') {
+        elements.submitModal.classList.remove('hidden');
+        elements.submitForm.reset();
+        elements.submitMessage.classList.add('hidden');
+        elements.submitImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
+        elements.submitImageUpload.classList.remove('has-image');
+        elements.submitImageData.value = '';
+        // Reset to quote type
+        elements.quoteFields.classList.remove('hidden');
+        elements.authorField.classList.remove('hidden');
+        elements.imageFields.classList.add('hidden');
+      } else if (type === 'password') {
+        elements.passwordModal.classList.remove('hidden');
+        document.getElementById('admin-password').value = '';
+        elements.passwordMessage.classList.add('hidden');
+      } else if (type === 'edit') {
+        elements.editModal.classList.remove('hidden');
+      }
+    }
+
+    function closeModal(type) {
+      if (type === 'submit') {
+        elements.submitModal.classList.add('hidden');
+      } else if (type === 'password') {
+        elements.passwordModal.classList.add('hidden');
+      } else if (type === 'edit') {
+        elements.editModal.classList.add('hidden');
+      }
+    }
+
+    // =====================================================
+    // FORM HANDLERS
+    // =====================================================
+    
+    async function handleSubmission(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const type = formData.get('type');
+      
+      // For Netlify forms, we'll submit via fetch
+      // But also show a success message locally
+      
+      try {
+        // Submit to Netlify
+        await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(formData).toString()
+        });
+        
+        showMessage('submit', 'Thank you! Your submission has been received and will be reviewed.', 'success');
+        e.target.reset();
+        elements.submitImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
+        elements.submitImageUpload.classList.remove('has-image');
+        
+        setTimeout(() => closeModal('submit'), 2000);
+      } catch (error) {
+        console.error('Submission error:', error);
+        showMessage('submit', 'Submission received! (Note: Form processing requires Netlify deployment)', 'success');
+        setTimeout(() => closeModal('submit'), 2000);
+      }
+    }
+
+    function handlePasswordSubmit(e) {
+      e.preventDefault();
+      const password = document.getElementById('admin-password').value;
+      
+      if (password === CONFIG.adminPassword) {
+        state.isAuthenticated = true;
+        closeModal('password');
+        showView('manage');
+      } else {
+        showMessage('password', 'Incorrect password.', 'error');
+      }
+    }
+
+    function handleEditSubmit(e) {
+      e.preventDefault();
+      
+      const id = document.getElementById('edit-id').value;
+      const type = document.getElementById('edit-type').value;
+      const tagsRaw = document.getElementById('edit-tags').value;
+      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+      const index = state.content.findIndex(c => c.id === id);
+      if (index === -1 && id) {
+        // Editing existing item not found
+        return;
+      }
+
+      const item = {
+        id: id || `item_${Date.now()}`,
+        type,
+        tags,
+        status: 'approved'
+      };
+
+      if (type === 'quote') {
+        item.content = document.getElementById('edit-content').value;
+        item.author = document.getElementById('edit-author').value;
+      } else {
+        item.imageData = elements.editImageData.value;
+        item.caption = document.getElementById('edit-caption').value;
+        
+        if (!item.imageData) {
+          alert('Please upload an image.');
+          return;
+        }
+      }
+
+      if (id && index !== -1) {
+        state.content[index] = item;
+      } else {
+        state.content.push(item);
+      }
+
+      saveContent();
+      closeModal('edit');
+      renderManageView();
+    }
+
+    function showMessage(formType, message, type) {
+      const el = formType === 'submit' ? elements.submitMessage : elements.passwordMessage;
+      el.textContent = message;
+      el.className = `form-message ${type}`;
+      el.classList.remove('hidden');
+    }
+
+    // =====================================================
+    // MANAGE VIEW
+    // =====================================================
+    
+    function renderManageView() {
+      const quotes = state.content.filter(c => c.type === 'quote');
+      const images = state.content.filter(c => c.type === 'image');
+
+      elements.viewManage.innerHTML = `
+        <div class="manage-header">
+          <h1 class="manage-title">Content Management</h1>
+          <button class="card-btn" id="add-content-btn" style="width: auto; padding: 0.75rem 1.5rem;">
+            + Add New
+          </button>
+        </div>
+
+        <div class="data-notice">
+          <div class="data-notice-title">💾 Data Storage</div>
+          <p>Content is stored in your browser's localStorage. To share content across devices or back up your collection, use the export/import buttons below.</p>
+          <div class="data-actions">
+            <button class="data-btn" id="export-btn">Export Data</button>
+            <button class="data-btn" id="import-btn">Import Data</button>
+            <input type="file" id="import-file" accept=".json" class="hidden">
+          </div>
+        </div>
+        
+        <div class="manage-tabs">
+          <button class="manage-tab ${state.manageTab === 'content' ? 'active' : ''}" data-tab="content">
+            All Content (${state.content.length})
+          </button>
+          <button class="manage-tab ${state.manageTab === 'quotes' ? 'active' : ''}" data-tab="quotes">
+            Quotes (${quotes.length})
+          </button>
+          <button class="manage-tab ${state.manageTab === 'images' ? 'active' : ''}" data-tab="images">
+            Images (${images.length})
+          </button>
+        </div>
+        
+        <div class="content-grid" id="content-grid">
+          ${renderContentCards()}
+        </div>
+      `;
+
+      // Tab switching
+      document.querySelectorAll('.manage-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          state.manageTab = tab.dataset.tab;
+          renderManageView();
+        });
+      });
+
+      // Add content button
+      document.getElementById('add-content-btn').addEventListener('click', openAddModal);
+
+      // Export/Import
+      document.getElementById('export-btn').addEventListener('click', exportData);
+      document.getElementById('import-btn').addEventListener('click', () => {
+        document.getElementById('import-file').click();
+      });
+      document.getElementById('import-file').addEventListener('change', importData);
+
+      // Card action buttons
+      setupCardActions();
+    }
+
+    function renderContentCards() {
+      let items = state.content;
+      
+      if (state.manageTab === 'quotes') {
+        items = items.filter(c => c.type === 'quote');
+      } else if (state.manageTab === 'images') {
+        items = items.filter(c => c.type === 'image');
+      }
+
+      if (items.length === 0) {
+        return '<div class="empty-state"><p>No content yet. Click "+ Add New" to get started.</p></div>';
+      }
+
+      return items.map(item => `
+        <div class="content-card" data-id="${item.id}">
+          <div class="content-card-type">${item.type}</div>
+          ${item.type === 'quote' 
+            ? `<p class="content-card-text">"${escapeHtml(item.content)}"</p>
+               ${item.author ? `<p class="content-card-author">— ${escapeHtml(item.author)}</p>` : ''}`
+            : `<img class="content-card-image" src="${item.imageData}" alt="">
+               ${item.caption ? `<p class="content-card-text">${escapeHtml(item.caption)}</p>` : ''}`
+          }
+          ${item.tags && item.tags.length > 0 
+            ? `<div class="content-card-tags">${item.tags.map(t => `<span class="content-tag">${escapeHtml(t)}</span>`).join('')}</div>` 
+            : ''}
+          <div class="content-card-actions">
+            <button class="card-btn edit-btn" data-id="${item.id}">Edit</button>
+            <button class="card-btn danger delete-btn" data-id="${item.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setupCardActions() {
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteContent(btn.dataset.id));
+      });
+    }
+
+    function openAddModal() {
+      document.getElementById('edit-modal-title').textContent = 'Add Content';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('edit-type').value = 'quote';
+      document.getElementById('edit-type-quote').checked = true;
+      document.getElementById('edit-content').value = '';
+      document.getElementById('edit-author').value = '';
+      document.getElementById('edit-caption').value = '';
+      document.getElementById('edit-tags').value = '';
+      elements.editImageData.value = '';
+      elements.editImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
+      elements.editImageUpload.classList.remove('has-image');
+      
+      // Show quote fields by default
+      document.getElementById('edit-quote-fields').classList.remove('hidden');
+      document.getElementById('edit-author-field').classList.remove('hidden');
+      document.getElementById('edit-image-fields').classList.add('hidden');
+      
+      openModal('edit');
+    }
+
+    function openEditModal(id) {
+      const item = state.content.find(c => c.id === id);
+      if (!item) return;
+
+      document.getElementById('edit-modal-title').textContent = 'Edit Content';
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-type').value = item.type;
+      document.getElementById('edit-tags').value = (item.tags || []).join(', ');
+
+      if (item.type === 'quote') {
+        document.getElementById('edit-type-quote').checked = true;
+        document.getElementById('edit-quote-fields').classList.remove('hidden');
+        document.getElementById('edit-author-field').classList.remove('hidden');
+        document.getElementById('edit-image-fields').classList.add('hidden');
+        document.getElementById('edit-content').value = item.content || '';
+        document.getElementById('edit-author').value = item.author || '';
+      } else {
+        document.getElementById('edit-type-image').checked = true;
+        document.getElementById('edit-quote-fields').classList.add('hidden');
+        document.getElementById('edit-author-field').classList.add('hidden');
+        document.getElementById('edit-image-fields').classList.remove('hidden');
+        document.getElementById('edit-caption').value = item.caption || '';
+        elements.editImageData.value = item.imageData || '';
+        
+        if (item.imageData) {
+          elements.editImageUpload.innerHTML = `<img src="${item.imageData}" class="image-preview" alt="Preview">`;
+          elements.editImageUpload.classList.add('has-image');
+        }
+      }
+
+      openModal('edit');
+    }
+
+    function deleteContent(id) {
+      if (!confirm('Are you sure you want to delete this?')) return;
+
+      state.content = state.content.filter(c => c.id !== id);
+      saveContent();
+      renderManageView();
+    }
+
+    // =====================================================
+    // DATA EXPORT/IMPORT
+    // =====================================================
+    
+    function exportData() {
+      const dataStr = JSON.stringify(state.content, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `strategy-inspiration-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          
+          if (!Array.isArray(imported)) {
+            alert('Invalid data format. Expected an array of content items.');
+            return;
+          }
+
+          if (confirm(`Import ${imported.length} items? This will replace your current content.`)) {
+            state.content = imported;
+            saveContent();
+            renderManageView();
+            alert('Data imported successfully!');
+          }
+        } catch (err) {
+          alert('Error parsing file. Make sure it\'s a valid JSON file.');
+        }
+      };
+      reader.readAsText(file);
+      
+      // Reset the input
+      e.target.value = '';
+    }
+
+    // =====================================================
+    // UTILITIES
+    // =====================================================
+    
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // =====================================================
+    // START THE APP
+    // =====================================================
+    
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
