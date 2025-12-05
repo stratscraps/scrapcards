@@ -135,7 +135,7 @@
     { "type": "image", "src": "./images/repeat.png", "caption": "" },
     { "type": "image", "src": "./images/despite.png", "caption": "" },
     { "type": "image", "src": "./images/same.png", "caption": "" },
-    { "type": "image", "src": "./images/contrast.png", "caption": "" },
+    { "type": "image", "src": "./images/contrast.png", "caption": "" }
 
   ]
 }
