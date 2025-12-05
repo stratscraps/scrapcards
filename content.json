@@ -121,5 +121,21 @@
     { "type": "quote", "text": "When are you at your best?", "author": "" },
     { "type": "quote", "text": "Who are you without your job?", "author": "" },
     { "type": "quote", "text": "Now what?", "author": "" }
+    { "type": "image", "src": "./images/whats standing in the way?.png", "caption": "" },
+    { "type": "image", "src": "./images/process.png", "caption": "" },
+    { "type": "image", "src": "./images/supernormal.png", "caption": "" },
+    { "type": "image", "src": "./images/loworhi.jpg", "caption": "" },
+    { "type": "image", "src": "./images/actualissue.jpg", "caption": "" },
+    { "type": "image", "src": "./images/media.png", "caption": "" },
+    { "type": "image", "src": "./images/smarts.png", "caption": "" },
+    { "type": "image", "src": "./images/cpb.jpg", "caption": "" },
+    { "type": "image", "src": "./images/sunny.jpg", "caption": "" },
+    { "type": "image", "src": "./images/triangle.jpg", "caption": "" },
+    { "type": "image", "src": "./images/provoke.png", "caption": "" },
+    { "type": "image", "src": "./images/repeat.png", "caption": "" },
+    { "type": "image", "src": "./images/despite.png", "caption": "" },
+    { "type": "image", "src": "./images/same.png", "caption": "" },
+    { "type": "image", "src": "./images/contrast.png", "caption": "" },
+
   ]
 }
