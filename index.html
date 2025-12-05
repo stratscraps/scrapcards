@@ -7,22 +7,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
+  
   <style>
     :root {
-      --bg-primary: #fafaf8;
-      --bg-secondary: #f0f0ec;
-      --text-primary: #1a1a1a;
-      --text-secondary: #666666;
-      --accent: #2d2d2d;
-      --accent-hover: #000000;
+      --bg: #fafaf8;
+      --text: #1a1a1a;
+      --text-light: #666;
       --border: #e0e0dc;
-      --success: #2d5a3d;
-      --error: #8b3a3a;
+      --accent: #2d2d2d;
     }
 
     * {
@@ -31,106 +23,136 @@
       padding: 0;
     }
 
-    html, body {
-      height: 100%;
-    }
-
     body {
       font-family: 'IBM Plex Mono', monospace;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
-      min-height: 100vh;
-    }
-
-    .app-container {
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
-    /* Navigation */
-    .nav {
+    /* Nav */
+    nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 1.5rem 3rem;
       border-bottom: 1px solid var(--border);
-      background: var(--bg-primary);
-      position: sticky;
-      top: 0;
-      z-index: 100;
     }
 
-    .nav-logo {
-      height: 40px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
-
-    .nav-logo img {
-      height: 100%;
-      width: auto;
-    }
-
-    .nav-logo-text {
+    .logo {
       font-size: 1.1rem;
       font-weight: 600;
       letter-spacing: -0.02em;
+      cursor: pointer;
     }
 
-    .nav-menu {
+    .nav-links {
       display: flex;
       gap: 2rem;
       list-style: none;
     }
 
-    .nav-menu a {
-      color: var(--text-secondary);
+    .nav-links a {
+      color: var(--text-light);
       text-decoration: none;
       font-size: 0.85rem;
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      transition: color 0.2s ease;
     }
 
-    .nav-menu a:hover {
-      color: var(--text-primary);
+    .nav-links a:hover {
+      color: var(--text);
     }
 
-    .nav-menu a.active {
-      color: var(--text-primary);
-    }
-
-    /* Main Content */
-    .main-content {
+    /* Main */
+    main {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 4rem 3rem;
-      max-width: 900px;
+      padding: 3rem;
+      max-width: 800px;
       margin: 0 auto;
       width: 100%;
     }
 
-    /* Intro Section */
-    .intro-section {
+    /* Intro */
+    .intro {
       text-align: center;
       margin-bottom: 3rem;
-    }
-
-    .intro-text {
-      font-size: 1.1rem;
+      color: var(--text-light);
       line-height: 1.8;
-      color: var(--text-secondary);
       max-width: 600px;
     }
 
-    /* Generate Button */
+    /* Content display */
+    .content {
+      width: 100%;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .quote {
+      text-align: center;
+      max-width: 700px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .quote-text {
+      font-size: 1.4rem;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding: 0 1rem;
+    }
+
+    .quote-text::before {
+      content: '"';
+      font-size: 4rem;
+      position: absolute;
+      top: -1.5rem;
+      left: -1.5rem;
+      color: var(--border);
+      font-family: Georgia, serif;
+    }
+
+    .quote-author {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      font-style: italic;
+    }
+
+    .image-container {
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .image-container img {
+      max-width: 100%;
+      max-height: 500px;
+      border: 1px solid var(--border);
+    }
+
+    .image-caption {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-light);
+      font-style: italic;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Button */
     .generate-btn {
       background: var(--accent);
       color: white;
@@ -142,1907 +164,129 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
+      transition: all 0.2s ease;
     }
 
     .generate-btn:hover {
-      background: var(--accent-hover);
+      background: #000;
       transform: translateY(-2px);
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
 
-    .generate-btn:active {
-      transform: translateY(0);
-    }
-
-    .generate-btn.loading {
-      pointer-events: none;
-      opacity: 0.7;
-    }
-
-    /* Content Display */
-    .content-display {
-      width: 100%;
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.5s ease;
-      margin-bottom: 2rem;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .quote-display {
-      text-align: center;
-      max-width: 700px;
-    }
-
-    .quote-text {
-      font-size: 1.5rem;
-      line-height: 1.7;
-      font-weight: 400;
-      margin-bottom: 1.5rem;
-      position: relative;
-      padding-left: 2rem;
-    }
-
-    .quote-text::before {
-      content: '"';
-      font-size: 4rem;
-      position: absolute;
-      top: -1.5rem;
-      left: -1rem;
-      color: var(--border);
-      font-family: Georgia, serif;
-    }
-
-    .quote-author {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    .image-display {
-      max-width: 100%;
-      text-align: center;
-    }
-
-    .image-display img {
-      max-width: 100%;
-      max-height: 500px;
-      object-fit: contain;
-      border: 1px solid var(--border);
-    }
-
-    .image-caption {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    /* Modal Overlay */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 2rem;
-    }
-
-    .modal {
-      background: var(--bg-primary);
-      max-width: 600px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 2.5rem;
-      position: relative;
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text-secondary);
-      padding: 0.5rem;
-      line-height: 1;
-    }
-
-    .modal-close:hover {
-      color: var(--text-primary);
-    }
-
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    /* Forms */
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-      color: var(--text-secondary);
-    }
-
-    .form-input,
-    .form-textarea,
-    .form-select {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      font-family: inherit;
-      font-size: 0.95rem;
-      border: 1px solid var(--border);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      transition: border-color 0.2s ease;
-    }
-
-    .form-input:focus,
-    .form-textarea:focus,
-    .form-select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .form-textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    .form-radio-group {
-      display: flex;
-      gap: 1.5rem;
-    }
-
-    .form-radio-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .form-submit {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      width: 100%;
-    }
-
-    .form-submit:hover {
-      background: var(--accent-hover);
-    }
-
-    .form-submit:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .form-message {
-      padding: 1rem;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-    }
-
-    .form-message.success {
-      background: rgba(45, 90, 61, 0.1);
-      color: var(--success);
-      border: 1px solid var(--success);
-    }
-
-    .form-message.error {
-      background: rgba(139, 58, 58, 0.1);
-      color: var(--error);
-      border: 1px solid var(--error);
-    }
-
-    /* Image Upload */
-    .image-upload-area {
-      border: 2px dashed var(--border);
-      padding: 2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s ease;
-    }
-
-    .image-upload-area:hover {
-      border-color: var(--accent);
-    }
-
-    .image-upload-area.has-image {
-      border-style: solid;
-      padding: 1rem;
-    }
-
-    .image-preview {
-      max-width: 100%;
-      max-height: 200px;
-      object-fit: contain;
-    }
-
-    .image-upload-text {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-    }
-
-    /* Manage Page */
-    .manage-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem 3rem;
-      width: 100%;
-    }
-
-    .manage-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .manage-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .manage-tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .manage-tab {
-      padding: 0.75rem 1.5rem;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      font-family: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .manage-tab.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .content-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      padding: 1.5rem;
-      position: relative;
-    }
-
-    .content-card-type {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-secondary);
-      margin-bottom: 0.75rem;
-    }
-
-    .content-card-text {
-      font-size: 0.95rem;
-      line-height: 1.6;
-      margin-bottom: 0.5rem;
-    }
-
-    .content-card-author {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    .content-card-image {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      margin-bottom: 0.75rem;
-    }
-
-    .content-card-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .content-tag {
-      font-size: 0.7rem;
-      padding: 0.25rem 0.5rem;
-      background: var(--bg-primary);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-    }
-
-    .content-card-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .card-btn {
-      flex: 1;
-      padding: 0.5rem;
-      font-family: inherit;
+    /* Counter */
+    .counter {
+      margin-top: 2rem;
       font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border: 1px solid var(--border);
-      background: var(--bg-primary);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .card-btn:hover {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .card-btn.danger:hover {
-      background: var(--error);
-      border-color: var(--error);
-    }
-
-    .card-btn.success:hover {
-      background: var(--success);
-      border-color: var(--success);
-    }
-
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: var(--text-secondary);
-    }
-
-    .empty-state p {
-      margin-bottom: 1rem;
+      color: var(--text-light);
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
-      .nav {
+    @media (max-width: 600px) {
+      nav {
         padding: 1rem 1.5rem;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 1rem;
       }
-
-      .nav-menu {
-        gap: 1rem;
+      
+      .nav-links {
+        gap: 1.5rem;
       }
-
-      .nav-menu a {
+      
+      .nav-links a {
         font-size: 0.75rem;
       }
-
-      .main-content {
+      
+      main {
         padding: 2rem 1.5rem;
       }
-
+      
       .quote-text {
-        font-size: 1.2rem;
-        padding-left: 1.5rem;
+        font-size: 1.15rem;
       }
-
+      
       .quote-text::before {
         font-size: 3rem;
-        top: -1rem;
         left: -0.5rem;
       }
-
-      .manage-container {
-        padding: 1.5rem;
-      }
-
-      .content-grid {
-        grid-template-columns: 1fr;
-      }
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-      margin-right: 0.5rem;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Data export notice */
-    .data-notice {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.85rem;
-    }
-
-    .data-notice-title {
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .data-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-
-    .data-btn {
-      padding: 0.5rem 1rem;
-      font-family: inherit;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border: 1px solid var(--border);
-      background: var(--bg-primary);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .data-btn:hover {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <div class="app-container" id="app">
-    <!-- Navigation -->
-    <nav class="nav">
-      <div class="nav-logo" id="nav-logo">
-        <span class="nav-logo-text">STRATEGY INSPIRATION</span>
-      </div>
-      <ul class="nav-menu">
-        <li><a href="#" id="nav-submit">Submit</a></li>
-        <li><a href="#" id="nav-manage">Manage</a></li>
-        <li><a href="#" id="nav-newsletter" target="_blank">Newsletter</a></li>
-        <li><a href="#" id="nav-website" target="_blank">Website</a></li>
-      </ul>
-    </nav>
+  <nav>
+    <div class="logo" onclick="location.reload()">STRATEGY INSPIRATION</div>
+    <ul class="nav-links">
+      <li><a href="https://stratscraps.substack.com/" target="_blank">Newsletter</a></li>
+      <li><a href="https://alexmorris.co" target="_blank">Website</a></li>
+    </ul>
+  </nav>
 
-    <!-- Home View -->
-    <main class="main-content" id="view-home">
-      <div class="intro-section" id="intro-section">
-        <p class="intro-text">
-          Feeling stuck? click away and shuffle through some strategy scraps to spark some thought.
-        </p>
-      </div>
-      
-      <div class="content-display hidden" id="content-display"></div>
+  <main>
+    <p class="intro" id="intro">
+      A curated collection of strategic wisdom, provocative insights, and visual inspiration 
+      gathered from the edges of culture and commerce. Click generate to spark your next breakthrough.
+    </p>
 
-      <button class="generate-btn" id="generate-btn">Shuffle</button>
-    </main>
+    <div class="content" id="content"></div>
 
-    <!-- Manage View -->
-    <div class="manage-container hidden" id="view-manage"></div>
-  </div>
-
-  <!-- Submit Modal -->
-  <div class="modal-overlay hidden" id="submit-modal">
-    <div class="modal">
-      <button class="modal-close" id="modal-close">&times;</button>
-      <h2 class="modal-title">Submit Inspiration</h2>
-      <form id="submit-form" name="submissions" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-        <input type="hidden" name="form-name" value="submissions">
-        <p class="hidden">
-          <label>Don't fill this out: <input name="bot-field"></label>
-        </p>
-        
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <div class="form-radio-group">
-            <label class="form-radio-label">
-              <input type="radio" name="type" value="quote" checked>
-              Quote
-            </label>
-            <label class="form-radio-label">
-              <input type="radio" name="type" value="image">
-              Image
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group" id="quote-fields">
-          <label class="form-label">Quote</label>
-          <textarea class="form-textarea" name="content" placeholder="Enter the quote..."></textarea>
-        </div>
-
-        <div class="form-group" id="author-field">
-          <label class="form-label">Author (optional)</label>
-          <input type="text" class="form-input" name="author" placeholder="Who said this?">
-        </div>
-
-        <div class="form-group hidden" id="image-fields">
-          <label class="form-label">Image</label>
-          <div class="image-upload-area" id="submit-image-upload">
-            <p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>
-          </div>
-          <input type="file" id="submit-image-input" name="image" accept="image/*" class="hidden">
-          <input type="hidden" name="imageData" id="submit-image-data">
-          <div style="margin-top: 0.75rem;">
-            <label class="form-label">Caption (optional)</label>
-            <input type="text" class="form-input" name="caption" placeholder="Describe the image...">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Your Name (optional)</label>
-          <input type="text" class="form-input" name="submittedBy" placeholder="For attribution...">
-        </div>
-
-        <button type="submit" class="form-submit">Submit for Review</button>
-        <div class="form-message hidden" id="submit-message"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Password Modal -->
-  <div class="modal-overlay hidden" id="password-modal">
-    <div class="modal" style="max-width: 400px;">
-      <button class="modal-close" id="password-modal-close">&times;</button>
-      <h2 class="modal-title">Admin Access</h2>
-      <form id="password-form">
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" class="form-input" id="admin-password" placeholder="Enter password...">
-        </div>
-        <button type="submit" class="form-submit">Access</button>
-        <div class="form-message hidden" id="password-message"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Bulk Import Modal -->
-  <div class="modal-overlay hidden" id="bulk-import-modal">
-    <div class="modal">
-      <button class="modal-close" id="bulk-import-modal-close">&times;</button>
-      <h2 class="modal-title">Bulk Import</h2>
-      <form id="bulk-import-form">
-        <div class="form-group">
-          <label class="form-label">Import Format</label>
-          <div class="form-radio-group">
-            <label class="form-radio-label">
-              <input type="radio" name="bulk-format" value="text" checked>
-              Text (quotes)
-            </label>
-            <label class="form-radio-label">
-              <input type="radio" name="bulk-format" value="images">
-              Images
-            </label>
-            <label class="form-radio-label">
-              <input type="radio" name="bulk-format" value="folder">
-              Folder (mixed)
-            </label>
-            <label class="form-radio-label">
-              <input type="radio" name="bulk-format" value="csv">
-              CSV
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group" id="bulk-text-fields">
-          <label class="form-label">Quotes (one per line)</label>
-          <textarea class="form-textarea" id="bulk-text-input" placeholder="Enter quotes, one per line..." style="min-height: 200px;" spellcheck="false"></textarea>
-          <small style="color: var(--text-secondary); font-size: 0.8rem;">
-            Format: Quote text | Author (optional)<br>
-            Example: Strategy without tactics is slow. | Sun Tzu
-          </small>
-        </div>
-
-        <div class="form-group hidden" id="bulk-csv-fields">
-          <label class="form-label">CSV File</label>
-          <input type="file" id="bulk-csv-input" accept=".csv,.txt" class="form-input">
-          <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 0.5rem;">
-            CSV Format: type,content,author,tags,imageUrl<br>
-            For quotes: quote,"The quote text","Author Name","tag1,tag2"<br>
-            For images: image,"Caption text","","tag1,tag2","https://example.com/image.jpg"
-          </small>
-        </div>
-
-        <div class="form-group hidden" id="bulk-images-fields">
-          <label class="form-label">Multiple Images</label>
-          <input type="file" id="bulk-images-input" accept="image/*" multiple class="form-input">
-          <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 0.5rem;">
-            Select multiple image files to upload at once. Each will be added as a separate item.
-          </small>
-        </div>
-
-        <div class="form-group hidden" id="bulk-folder-fields">
-          <label class="form-label">Select Mixed Files</label>
-          <input type="file" id="bulk-folder-input" accept="image/*,.txt,text/plain" multiple class="form-input">
-          <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 0.5rem;">
-            Select multiple files: images (JPG, PNG, GIF, WebP) and/or text files (.txt).<br>
-            Text files: One quote per line, optional format: Quote | Author<br>
-            You can select all files from a folder at once (Cmd+A / Ctrl+A).
-          </small>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Default Tags (comma-separated, optional)</label>
-          <input type="text" class="form-input" id="bulk-tags" placeholder="strategy, insight...">
-        </div>
-
-        <button type="submit" class="form-submit">Import</button>
-        <div class="form-message hidden" id="bulk-import-message"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit Modal -->
-  <div class="modal-overlay hidden" id="edit-modal">
-    <div class="modal">
-      <button class="modal-close" id="edit-modal-close">&times;</button>
-      <h2 class="modal-title" id="edit-modal-title">Edit Content</h2>
-      <form id="edit-form">
-        <input type="hidden" id="edit-id">
-        <input type="hidden" id="edit-type">
-        
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <div class="form-radio-group">
-            <label class="form-radio-label">
-              <input type="radio" name="edit-type-radio" value="quote" id="edit-type-quote">
-              Quote
-            </label>
-            <label class="form-radio-label">
-              <input type="radio" name="edit-type-radio" value="image" id="edit-type-image">
-              Image
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group" id="edit-quote-fields">
-          <label class="form-label">Quote</label>
-          <textarea class="form-textarea" id="edit-content"></textarea>
-        </div>
-
-        <div class="form-group" id="edit-author-field">
-          <label class="form-label">Author</label>
-          <input type="text" class="form-input" id="edit-author">
-        </div>
-
-        <div class="form-group hidden" id="edit-image-fields">
-          <label class="form-label">Image</label>
-          <div class="image-upload-area" id="edit-image-upload">
-            <p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>
-          </div>
-          <input type="file" id="edit-image-input" accept="image/*" class="hidden">
-          <input type="hidden" id="edit-image-data">
-          <label class="form-label" style="margin-top: 0.75rem;">Caption</label>
-          <input type="text" class="form-input" id="edit-caption">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Tags (comma-separated)</label>
-          <input type="text" class="form-input" id="edit-tags" placeholder="strategy, insight, culture...">
-        </div>
-
-        <button type="submit" class="form-submit">Save</button>
-      </form>
-    </div>
-  </div>
+    <button class="generate-btn" id="generate-btn">Generate</button>
+    
+    <div class="counter" id="counter"></div>
+  </main>
 
   <script>
-    // =====================================================
-    // FIREBASE INITIALIZATION
-    // =====================================================
+    let items = [];
+    let lastIndex = -1;
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCq8PaIr0TcEGsRRa3Jjq-ifPCAVDAkvak",
-      authDomain: "scrapcards-f89b9.firebaseapp.com",
-      databaseURL: "https://scrapcards-f89b9-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "scrapcards-f89b9",
-      storageBucket: "scrapcards-f89b9.firebasestorage.app",
-      messagingSenderId: "113010862060",
-      appId: "1:113010862060:web:5533f4e82c19214e7ec2c9"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const contentCollection = db.collection('content');
-
-    // =====================================================
-    // CONFIGURATION - UPDATE THESE VALUES
-    // =====================================================
-
-    const CONFIG = {
-      // Admin password for the Manage section
-      adminPassword: "crapscraps2025",
-
-      // External links
-      newsletterUrl: "https://stratscraps.substack.com/",
-      websiteUrl: "https:alexmorris.co",
-
-      // Logo image path (relative to index.html, or set to null for text)
-      logoPath: null, // e.g., "./logo.png"
-      logoText: "STRATEGY SPARK SHUFFLER"
-    };
-
-    // =====================================================
-    // INITIAL CONTENT - Edit this to add your starting content
-    // Images should be base64 encoded (data:image/...) for universal visibility
-    // =====================================================
-    
-    const INITIAL_CONTENT = [
-      { 
-        id: "1", 
-        type: "quote", 
-        content: "Strategy and tactics without diagnosis is just panic.", 
-        author: "", 
-        tags: ["strategy"],
-        status: "approved"
-      },
-      { 
-        id: "2", 
-        type: "quote", 
-        content: "A single data point is almost always useless. Insight comes from one point in comparison to another.", 
-        author: "", 
-        tags: ["insight"],
-        status: "approved"
-      },
-      { 
-        id: "3", 
-        type: "quote", 
-        content: "Simplify, Then Exaggerate", 
-        author: "", 
-        tags: ["creative"],
-        status: "approved"
-      },
-      { 
-        id: "4", 
-        type: "quote", 
-        content: "Most geniuses prosper not by deconstructing intricate complexities but by exploiting unrecognized simplicities.", 
-        author: "Andy Benoit", 
-        tags: ["strategy"],
-        status: "approved"
-      },
-      { 
-        id: "5", 
-        type: "quote", 
-        content: "Culture eats strategy for breakfast.", 
-        author: "Peter Drucker", 
-        tags: ["culture", "strategy"],
-        status: "approved"
-      },
-      { 
-        id: "6", 
-        type: "quote", 
-        content: "The goal of marketing is making sure that the message taints the tastelessness of existence, and forces us to pay attention.", 
-        author: "", 
-        tags: ["marketing"],
-        status: "approved"
-      },
-      { 
-        id: "7", 
-        type: "quote", 
-        content: "Extreme principles can lead to extreme clarity.", 
-        author: "", 
-        tags: ["strategy"],
-        status: "approved"
-      },
-      { 
-        id: "8", 
-        type: "quote", 
-        content: "What conventions Must you break? What conventions could you break? What conventions should you NOT break?", 
-        author: "", 
-        tags: ["creative", "strategy"],
-        status: "approved"
-      }
-    ];
-
-    // =====================================================
-    // STATE MANAGEMENT
-    // =====================================================
-
-    const state = {
-      isAuthenticated: false,
-      currentView: 'home',
-      content: [],
-      currentItem: null,
-      manageTab: 'content',
-      isLoading: true,
-      unsubscribe: null // For Firestore listener
-    };
-
-    // =====================================================
-    // DOM ELEMENTS
-    // =====================================================
-    
-    const elements = {
-      navLogo: document.getElementById('nav-logo'),
-      navSubmit: document.getElementById('nav-submit'),
-      navManage: document.getElementById('nav-manage'),
-      navNewsletter: document.getElementById('nav-newsletter'),
-      navWebsite: document.getElementById('nav-website'),
-      viewHome: document.getElementById('view-home'),
-      viewManage: document.getElementById('view-manage'),
-      introSection: document.getElementById('intro-section'),
-      contentDisplay: document.getElementById('content-display'),
-      generateBtn: document.getElementById('generate-btn'),
-      submitModal: document.getElementById('submit-modal'),
-      submitForm: document.getElementById('submit-form'),
-      submitMessage: document.getElementById('submit-message'),
-      modalClose: document.getElementById('modal-close'),
-      passwordModal: document.getElementById('password-modal'),
-      passwordForm: document.getElementById('password-form'),
-      passwordMessage: document.getElementById('password-message'),
-      passwordModalClose: document.getElementById('password-modal-close'),
-      bulkImportModal: document.getElementById('bulk-import-modal'),
-      bulkImportForm: document.getElementById('bulk-import-form'),
-      bulkImportMessage: document.getElementById('bulk-import-message'),
-      bulkImportModalClose: document.getElementById('bulk-import-modal-close'),
-      editModal: document.getElementById('edit-modal'),
-      editForm: document.getElementById('edit-form'),
-      editModalClose: document.getElementById('edit-modal-close'),
-      quoteFields: document.getElementById('quote-fields'),
-      authorField: document.getElementById('author-field'),
-      imageFields: document.getElementById('image-fields'),
-      submitImageUpload: document.getElementById('submit-image-upload'),
-      submitImageInput: document.getElementById('submit-image-input'),
-      submitImageData: document.getElementById('submit-image-data'),
-      editImageUpload: document.getElementById('edit-image-upload'),
-      editImageInput: document.getElementById('edit-image-input'),
-      editImageData: document.getElementById('edit-image-data')
-    };
-
-    // =====================================================
-    // INITIALIZATION
-    // =====================================================
-    
-    function init() {
-      // Set external links
-      elements.navNewsletter.href = CONFIG.newsletterUrl;
-      elements.navWebsite.href = CONFIG.websiteUrl;
-      
-      // Set logo
-      if (CONFIG.logoPath) {
-        elements.navLogo.innerHTML = `<img src="${CONFIG.logoPath}" alt="Logo">`;
-      } else {
-        elements.navLogo.innerHTML = `<span class="nav-logo-text">${CONFIG.logoText}</span>`;
-      }
-      
-      // Load content
-      loadContent();
-      
-      // Set up event listeners
-      setupEventListeners();
-    }
-
-    function setupEventListeners() {
-      // Navigation
-      elements.navLogo.addEventListener('click', () => showView('home'));
-      elements.navSubmit.addEventListener('click', (e) => {
-        e.preventDefault();
-        openModal('submit');
-      });
-      elements.navManage.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (state.isAuthenticated) {
-          showView('manage');
-        } else {
-          openModal('password');
-        }
-      });
-
-      // Generate button
-      elements.generateBtn.addEventListener('click', generateRandom);
-
-      // Submit form type toggle
-      document.querySelectorAll('input[name="type"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          const isImage = e.target.value === 'image';
-          elements.quoteFields.classList.toggle('hidden', isImage);
-          elements.authorField.classList.toggle('hidden', isImage);
-          elements.imageFields.classList.toggle('hidden', !isImage);
-        });
-      });
-
-      // Edit form type toggle
-      document.querySelectorAll('input[name="edit-type-radio"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          const isImage = e.target.value === 'image';
-          document.getElementById('edit-quote-fields').classList.toggle('hidden', isImage);
-          document.getElementById('edit-author-field').classList.toggle('hidden', isImage);
-          document.getElementById('edit-image-fields').classList.toggle('hidden', !isImage);
-          document.getElementById('edit-type').value = e.target.value;
-        });
-      });
-
-      // Image upload for submit form
-      elements.submitImageUpload.addEventListener('click', () => {
-        elements.submitImageInput.click();
-      });
-      elements.submitImageInput.addEventListener('change', (e) => {
-        handleImageUpload(e, 'submit');
-      });
-
-      // Image upload for edit form
-      elements.editImageUpload.addEventListener('click', () => {
-        elements.editImageInput.click();
-      });
-      elements.editImageInput.addEventListener('change', (e) => {
-        handleImageUpload(e, 'edit');
-      });
-
-      // Submit form (using Netlify forms for submissions)
-      elements.submitForm.addEventListener('submit', handleSubmission);
-
-      // Password form
-      elements.passwordForm.addEventListener('submit', handlePasswordSubmit);
-
-      // Edit form
-      elements.editForm.addEventListener('submit', handleEditSubmit);
-
-      // Bulk import form
-      elements.bulkImportForm.addEventListener('submit', handleBulkImportSubmit);
-
-      // Bulk import format toggle
-      document.querySelectorAll('input[name="bulk-format"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          const format = e.target.value;
-          document.getElementById('bulk-text-fields').classList.toggle('hidden', format !== 'text');
-          document.getElementById('bulk-csv-fields').classList.toggle('hidden', format !== 'csv');
-          document.getElementById('bulk-images-fields').classList.toggle('hidden', format !== 'images');
-          document.getElementById('bulk-folder-fields').classList.toggle('hidden', format !== 'folder');
-        });
-      });
-
-      // Modal close buttons
-      elements.modalClose.addEventListener('click', () => closeModal('submit'));
-      elements.passwordModalClose.addEventListener('click', () => closeModal('password'));
-      elements.bulkImportModalClose.addEventListener('click', () => closeModal('bulkImport'));
-      elements.editModalClose.addEventListener('click', () => closeModal('edit'));
-
-      // Close modals on overlay click
-      document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-          if (e.target === overlay) {
-            overlay.classList.add('hidden');
-          }
-        });
-      });
-    }
-
-    // =====================================================
-    // IMAGE HANDLING - Base64 encoding for universal visibility
-    // =====================================================
-    
-    function handleImageUpload(e, formType) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      // Validate file type
-      if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
-        alert('Please upload a JPG, PNG, GIF, or WebP image.');
-        return;
-      }
-
-      // Validate file size (2MB max for reasonable localStorage storage)
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Image too large. Please use an image under 2MB.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target.result;
-        
-        if (formType === 'submit') {
-          elements.submitImageData.value = base64;
-          elements.submitImageUpload.innerHTML = `<img src="${base64}" class="image-preview" alt="Preview">`;
-          elements.submitImageUpload.classList.add('has-image');
-        } else {
-          elements.editImageData.value = base64;
-          elements.editImageUpload.innerHTML = `<img src="${base64}" class="image-preview" alt="Preview">`;
-          elements.editImageUpload.classList.add('has-image');
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // =====================================================
-    // CONTENT MANAGEMENT - FIREBASE FIRESTORE
-    // =====================================================
-
-    function loadContent() {
-      // Set up real-time listener for Firestore content
-      state.unsubscribe = contentCollection.onSnapshot(
-        (snapshot) => {
-          state.content = [];
-          snapshot.forEach((doc) => {
-            state.content.push({ ...doc.data(), id: doc.id });
-          });
-
-          // If no content exists, initialize with default content
-          if (state.content.length === 0 && state.isLoading) {
-            console.log('No content found, initializing with default content...');
-            initializeDefaultContent();
-          }
-
-          state.isLoading = false;
-
-          // Update manage view if visible
-          if (state.currentView === 'manage') {
-            renderManageView();
-          }
-        },
-        (error) => {
-          console.error('Error loading content from Firestore:', error);
-          state.isLoading = false;
-          alert('Error connecting to cloud storage. Please check your internet connection.');
-        }
-      );
-    }
-
-    async function initializeDefaultContent() {
+    // Load content from JSON file
+    async function loadContent() {
       try {
-        const batch = db.batch();
-        INITIAL_CONTENT.forEach((item) => {
-          const docRef = contentCollection.doc(item.id);
-          batch.set(docRef, item);
-        });
-        await batch.commit();
-        console.log('Default content initialized successfully');
+        const response = await fetch('./content.json');
+        const data = await response.json();
+        items = data.items;
+        document.getElementById('counter').textContent = `${items.length} items in collection`;
       } catch (error) {
-        console.error('Error initializing default content:', error);
+        console.error('Error loading content:', error);
+        document.getElementById('content').innerHTML = '<p>Error loading content. Make sure content.json exists.</p>';
       }
     }
 
-    async function saveContentItem(item) {
-      try {
-        if (item.id) {
-          // Update existing item
-          await contentCollection.doc(item.id).set(item);
-        } else {
-          // Add new item
-          const docRef = await contentCollection.add(item);
-          item.id = docRef.id;
-        }
-      } catch (error) {
-        console.error('Error saving content to Firestore:', error);
-        alert('Error saving to cloud storage. Please try again.');
-        throw error;
-      }
-    }
+    // Generate random item
+    function generate() {
+      if (items.length === 0) return;
 
-    async function deleteContentItem(id) {
-      try {
-        await contentCollection.doc(id).delete();
-      } catch (error) {
-        console.error('Error deleting content from Firestore:', error);
-        alert('Error deleting from cloud storage. Please try again.');
-        throw error;
-      }
-    }
+      // Hide intro after first generate
+      document.getElementById('intro').classList.add('hidden');
 
-    async function bulkSaveContent(items) {
-      try {
-        const batch = db.batch();
-        items.forEach((item) => {
-          if (item.id) {
-            const docRef = contentCollection.doc(item.id);
-            batch.set(docRef, item);
-          } else {
-            const docRef = contentCollection.doc();
-            item.id = docRef.id;
-            batch.set(docRef, item);
-          }
-        });
-        await batch.commit();
-      } catch (error) {
-        console.error('Error bulk saving to Firestore:', error);
-        alert('Error saving to cloud storage. Please try again.');
-        throw error;
-      }
-    }
+      // Pick random item (avoid repeating the same one twice)
+      let index;
+      do {
+        index = Math.floor(Math.random() * items.length);
+      } while (index === lastIndex && items.length > 1);
+      lastIndex = index;
 
-    function generateRandom() {
-      const approved = state.content.filter(c => c.status === 'approved');
-      
-      if (approved.length === 0) {
-        alert('No content available. Add some in the Manage section!');
-        return;
-      }
+      const item = items[index];
+      const contentDiv = document.getElementById('content');
 
-      elements.generateBtn.classList.add('loading');
-      elements.generateBtn.innerHTML = '<span class="spinner"></span>Shuffling...';
-
-      setTimeout(() => {
-        const randomIndex = Math.floor(Math.random() * approved.length);
-        state.currentItem = approved[randomIndex];
-
-        renderCurrentItem();
-
-        elements.generateBtn.classList.remove('loading');
-        elements.generateBtn.textContent = 'Shuffle';
-      }, 300);
-    }
-
-    function renderCurrentItem() {
-      elements.introSection.classList.add('hidden');
-      elements.contentDisplay.classList.remove('hidden');
-      
-      const item = state.currentItem;
-      
       if (item.type === 'quote') {
-        elements.contentDisplay.innerHTML = `
-          <div class="quote-display" style="animation: fadeIn 0.5s ease">
-            <p class="quote-text">${escapeHtml(item.content)}</p>
+        contentDiv.innerHTML = `
+          <div class="quote">
+            <p class="quote-text">${escapeHtml(item.text)}</p>
             ${item.author ? `<p class="quote-author">— ${escapeHtml(item.author)}</p>` : ''}
           </div>
         `;
       } else if (item.type === 'image') {
-        elements.contentDisplay.innerHTML = `
-          <div class="image-display" style="animation: fadeIn 0.5s ease">
-            <img src="${item.imageData}" alt="${escapeHtml(item.caption || 'Inspiration image')}">
+        contentDiv.innerHTML = `
+          <div class="image-container">
+            <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.caption || 'Inspiration')}">
             ${item.caption ? `<p class="image-caption">${escapeHtml(item.caption)}</p>` : ''}
           </div>
         `;
       }
     }
 
-    // =====================================================
-    // VIEW MANAGEMENT
-    // =====================================================
-    
-    function showView(view) {
-      state.currentView = view;
-      
-      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
-      
-      if (view === 'home') {
-        elements.viewHome.classList.remove('hidden');
-        elements.viewManage.classList.add('hidden');
-        resetHomeView();
-      } else if (view === 'manage') {
-        elements.viewHome.classList.add('hidden');
-        elements.viewManage.classList.remove('hidden');
-        elements.navManage.classList.add('active');
-        renderManageView();
-      }
-    }
-
-    function resetHomeView() {
-      elements.introSection.classList.remove('hidden');
-      elements.contentDisplay.classList.add('hidden');
-      elements.contentDisplay.innerHTML = '';
-      state.currentItem = null;
-    }
-
-    function openModal(type) {
-      if (type === 'submit') {
-        elements.submitModal.classList.remove('hidden');
-        elements.submitForm.reset();
-        elements.submitMessage.classList.add('hidden');
-        elements.submitImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
-        elements.submitImageUpload.classList.remove('has-image');
-        elements.submitImageData.value = '';
-        // Reset to quote type
-        elements.quoteFields.classList.remove('hidden');
-        elements.authorField.classList.remove('hidden');
-        elements.imageFields.classList.add('hidden');
-      } else if (type === 'password') {
-        elements.passwordModal.classList.remove('hidden');
-        document.getElementById('admin-password').value = '';
-        elements.passwordMessage.classList.add('hidden');
-      } else if (type === 'bulkImport') {
-        elements.bulkImportModal.classList.remove('hidden');
-        elements.bulkImportForm.reset();
-        elements.bulkImportMessage.classList.add('hidden');
-        document.getElementById('bulk-text-fields').classList.remove('hidden');
-        document.getElementById('bulk-csv-fields').classList.add('hidden');
-        document.getElementById('bulk-images-fields').classList.add('hidden');
-        document.getElementById('bulk-folder-fields').classList.add('hidden');
-      } else if (type === 'edit') {
-        elements.editModal.classList.remove('hidden');
-      }
-    }
-
-    function closeModal(type) {
-      if (type === 'submit') {
-        elements.submitModal.classList.add('hidden');
-      } else if (type === 'password') {
-        elements.passwordModal.classList.add('hidden');
-      } else if (type === 'bulkImport') {
-        elements.bulkImportModal.classList.add('hidden');
-      } else if (type === 'edit') {
-        elements.editModal.classList.add('hidden');
-      }
-    }
-
-    // =====================================================
-    // FORM HANDLERS
-    // =====================================================
-    
-    async function handleSubmission(e) {
-      e.preventDefault();
-      
-      const formData = new FormData(e.target);
-      const type = formData.get('type');
-      
-      // For Netlify forms, we'll submit via fetch
-      // But also show a success message locally
-      
-      try {
-        // Submit to Netlify
-        await fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(formData).toString()
-        });
-        
-        showMessage('submit', 'Thank you! Your submission has been received and will be reviewed.', 'success');
-        e.target.reset();
-        elements.submitImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
-        elements.submitImageUpload.classList.remove('has-image');
-        
-        setTimeout(() => closeModal('submit'), 2000);
-      } catch (error) {
-        console.error('Submission error:', error);
-        showMessage('submit', 'Submission received! (Note: Form processing requires Netlify deployment)', 'success');
-        setTimeout(() => closeModal('submit'), 2000);
-      }
-    }
-
-    function handlePasswordSubmit(e) {
-      e.preventDefault();
-      const password = document.getElementById('admin-password').value;
-      
-      if (password === CONFIG.adminPassword) {
-        state.isAuthenticated = true;
-        closeModal('password');
-        showView('manage');
-      } else {
-        showMessage('password', 'Incorrect password.', 'error');
-      }
-    }
-
-    async function handleEditSubmit(e) {
-      e.preventDefault();
-
-      const id = document.getElementById('edit-id').value;
-      const type = document.getElementById('edit-type').value;
-      const tagsRaw = document.getElementById('edit-tags').value;
-      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
-
-      const item = {
-        type,
-        tags,
-        status: 'approved'
-      };
-
-      if (id) {
-        item.id = id;
-      }
-
-      if (type === 'quote') {
-        item.content = document.getElementById('edit-content').value;
-        item.author = document.getElementById('edit-author').value;
-      } else {
-        item.imageData = elements.editImageData.value;
-        item.caption = document.getElementById('edit-caption').value;
-
-        if (!item.imageData) {
-          alert('Please upload an image.');
-          return;
-        }
-      }
-
-      try {
-        await saveContentItem(item);
-        closeModal('edit');
-      } catch (error) {
-        // Error already handled in saveContentItem
-      }
-    }
-
-    async function handleBulkImportSubmit(e) {
-      e.preventDefault();
-
-      const format = document.querySelector('input[name="bulk-format"]:checked').value;
-      const defaultTags = document.getElementById('bulk-tags').value
-        .split(',')
-        .map(t => t.trim())
-        .filter(Boolean);
-
-      let importedItems = [];
-
-      try {
-        if (format === 'text') {
-          const text = document.getElementById('bulk-text-input').value.trim();
-          if (!text) {
-            showMessage('bulkImport', 'Please enter some quotes to import.', 'error');
-            return;
-          }
-
-          const lines = text.split('\n').filter(line => line.trim());
-          importedItems = lines.map((line, index) => {
-            const parts = line.split('|').map(p => p.trim());
-            const content = parts[0];
-            const author = parts[1] || '';
-
-            return {
-              id: `bulk_${Date.now()}_${index}`,
-              type: 'quote',
-              content,
-              author,
-              tags: defaultTags,
-              status: 'approved'
-            };
-          });
-
-        } else if (format === 'images') {
-          const fileInput = document.getElementById('bulk-images-input');
-          const files = fileInput.files;
-
-          if (!files || files.length === 0) {
-            showMessage('bulkImport', 'Please select at least one image.', 'error');
-            return;
-          }
-
-          // Show progress message
-          showMessage('bulkImport', `Processing ${files.length} image(s)...`, 'success');
-
-          // Process all images
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-
-            // Validate file type
-            if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
-              console.warn(`Skipping ${file.name}: not a valid image type`);
-              continue;
-            }
-
-            // Validate file size (2MB max)
-            if (file.size > 2 * 1024 * 1024) {
-              console.warn(`Skipping ${file.name}: file too large (max 2MB)`);
-              continue;
-            }
-
-            const imageData = await readFileAsDataURL(file);
-            const caption = file.name.replace(/\.[^/.]+$/, ''); // Use filename without extension as caption
-
-            importedItems.push({
-              id: `bulk_img_${Date.now()}_${i}`,
-              type: 'image',
-              imageData,
-              caption,
-              tags: defaultTags,
-              status: 'approved'
-            });
-          }
-
-        } else if (format === 'folder') {
-          const fileInput = document.getElementById('bulk-folder-input');
-          const files = fileInput.files;
-
-          if (!files || files.length === 0) {
-            showMessage('bulkImport', 'Please select a folder with files.', 'error');
-            return;
-          }
-
-          // Show progress message
-          showMessage('bulkImport', `Processing ${files.length} file(s)...`, 'success');
-
-          let imageCount = 0;
-          let textCount = 0;
-
-          // Process all files from folder
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-
-            // Check if it's an image
-            if (file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
-              // Validate file size (2MB max)
-              if (file.size > 2 * 1024 * 1024) {
-                console.warn(`Skipping ${file.name}: file too large (max 2MB)`);
-                continue;
-              }
-
-              const imageData = await readFileAsDataURL(file);
-              const caption = file.name.replace(/\.[^/.]+$/, ''); // Use filename without extension as caption
-
-              importedItems.push({
-                id: `bulk_folder_img_${Date.now()}_${imageCount}`,
-                type: 'image',
-                imageData,
-                caption,
-                tags: defaultTags,
-                status: 'approved'
-              });
-              imageCount++;
-
-            } else if (file.name.endsWith('.txt') || file.type === 'text/plain') {
-              // Process text file
-              const text = await readFileAsText(file);
-              const lines = text.split('\n').filter(line => line.trim());
-
-              lines.forEach((line, lineIndex) => {
-                const parts = line.split('|').map(p => p.trim());
-                const content = parts[0];
-                const author = parts[1] || '';
-
-                if (content) {
-                  importedItems.push({
-                    id: `bulk_folder_txt_${Date.now()}_${textCount}_${lineIndex}`,
-                    type: 'quote',
-                    content,
-                    author,
-                    tags: defaultTags,
-                    status: 'approved'
-                  });
-                }
-              });
-              textCount++;
-            }
-          }
-
-          console.log(`Processed ${imageCount} images and ${textCount} text files from folder`);
-
-        } else if (format === 'csv') {
-          const fileInput = document.getElementById('bulk-csv-input');
-          const file = fileInput.files[0];
-
-          if (!file) {
-            showMessage('bulkImport', 'Please select a CSV file.', 'error');
-            return;
-          }
-
-          const text = await readFileAsText(file);
-          const lines = text.split('\n').filter(line => line.trim());
-
-          // Skip header if it exists
-          const startIndex = lines[0].toLowerCase().includes('type') ? 1 : 0;
-
-          // Show progress for CSV with images
-          showMessage('bulkImport', 'Processing CSV...', 'success');
-
-          for (let i = startIndex; i < lines.length; i++) {
-            const line = lines[i];
-            const parts = parseCSVLine(line);
-            const type = parts[0] || 'quote';
-            const content = parts[1] || '';
-            const author = parts[2] || '';
-            const tags = parts[3]
-              ? parts[3].split(',').map(t => t.trim()).filter(Boolean)
-              : defaultTags;
-            const imageUrl = parts[4] || '';
-
-            if (type === 'quote' && content) {
-              importedItems.push({
-                id: `bulk_${Date.now()}_${i}`,
-                type: 'quote',
-                content,
-                author,
-                tags,
-                status: 'approved'
-              });
-            } else if (type === 'image' && imageUrl) {
-              try {
-                // Fetch and convert URL image to base64
-                const imageData = await fetchImageAsDataURL(imageUrl);
-                importedItems.push({
-                  id: `bulk_${Date.now()}_${i}`,
-                  type: 'image',
-                  imageData,
-                  caption: content || '',
-                  tags,
-                  status: 'approved'
-                });
-              } catch (err) {
-                console.warn(`Failed to load image from ${imageUrl}:`, err);
-              }
-            }
-          }
-        }
-
-        if (importedItems.length === 0) {
-          showMessage('bulkImport', 'No valid items to import.', 'error');
-          return;
-        }
-
-        // Save all items to Firestore
-        try {
-          await bulkSaveContent(importedItems);
-          showMessage('bulkImport', `Successfully imported ${importedItems.length} item(s)!`, 'success');
-
-          setTimeout(() => {
-            closeModal('bulkImport');
-          }, 1500);
-        } catch (error) {
-          // Error already handled in bulkSaveContent
-        }
-
-      } catch (error) {
-        console.error('Bulk import error:', error);
-        showMessage('bulkImport', 'Error importing content. Please check your format.', 'error');
-      }
-    }
-
-    function readFileAsText(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = reject;
-        reader.readAsText(file);
-      });
-    }
-
-    function readFileAsDataURL(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function fetchImageAsDataURL(url) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-
-          try {
-            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
-            resolve(dataURL);
-          } catch (err) {
-            reject(new Error('Failed to convert image to data URL'));
-          }
-        };
-
-        img.onerror = () => {
-          reject(new Error(`Failed to load image from ${url}`));
-        };
-
-        img.src = url;
-      });
-    }
-
-    function parseCSVLine(line) {
-      const result = [];
-      let current = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          result.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-
-      result.push(current.trim());
-      return result.map(s => s.replace(/^["']|["']$/g, ''));
-    }
-
-    function showMessage(formType, message, type) {
-      let el;
-      if (formType === 'submit') {
-        el = elements.submitMessage;
-      } else if (formType === 'password') {
-        el = elements.passwordMessage;
-      } else if (formType === 'bulkImport') {
-        el = elements.bulkImportMessage;
-      }
-
-      el.textContent = message;
-      el.className = `form-message ${type}`;
-      el.classList.remove('hidden');
-    }
-
-    // =====================================================
-    // MANAGE VIEW
-    // =====================================================
-    
-    function renderManageView() {
-      const quotes = state.content.filter(c => c.type === 'quote');
-      const images = state.content.filter(c => c.type === 'image');
-
-      elements.viewManage.innerHTML = `
-        <div class="manage-header">
-          <h1 class="manage-title">Content Management</h1>
-          <button class="card-btn" id="add-content-btn" style="width: auto; padding: 0.75rem 1.5rem;">
-            + Add New
-          </button>
-        </div>
-
-        <div class="data-notice">
-          <div class="data-notice-title">☁️ Cloud Storage</div>
-          <p>Content is stored in Firebase Cloud Firestore and syncs in real-time across all devices. All visitors see the same content. Use export/import for backups.</p>
-          <div class="data-actions">
-            <button class="data-btn" id="export-btn">Export Data</button>
-            <button class="data-btn" id="import-btn">Import Data</button>
-            <button class="data-btn" id="bulk-import-btn">Bulk Import</button>
-            <input type="file" id="import-file" accept=".json" class="hidden">
-          </div>
-        </div>
-        
-        <div class="manage-tabs">
-          <button class="manage-tab ${state.manageTab === 'content' ? 'active' : ''}" data-tab="content">
-            All Content (${state.content.length})
-          </button>
-          <button class="manage-tab ${state.manageTab === 'quotes' ? 'active' : ''}" data-tab="quotes">
-            Quotes (${quotes.length})
-          </button>
-          <button class="manage-tab ${state.manageTab === 'images' ? 'active' : ''}" data-tab="images">
-            Images (${images.length})
-          </button>
-        </div>
-        
-        <div class="content-grid" id="content-grid">
-          ${renderContentCards()}
-        </div>
-      `;
-
-      // Tab switching
-      document.querySelectorAll('.manage-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          state.manageTab = tab.dataset.tab;
-          renderManageView();
-        });
-      });
-
-      // Add content button
-      document.getElementById('add-content-btn').addEventListener('click', openAddModal);
-
-      // Export/Import
-      document.getElementById('export-btn').addEventListener('click', exportData);
-      document.getElementById('import-btn').addEventListener('click', () => {
-        document.getElementById('import-file').click();
-      });
-      document.getElementById('import-file').addEventListener('change', importData);
-      document.getElementById('bulk-import-btn').addEventListener('click', () => openModal('bulkImport'));
-
-      // Card action buttons
-      setupCardActions();
-    }
-
-    function renderContentCards() {
-      let items = state.content;
-      
-      if (state.manageTab === 'quotes') {
-        items = items.filter(c => c.type === 'quote');
-      } else if (state.manageTab === 'images') {
-        items = items.filter(c => c.type === 'image');
-      }
-
-      if (items.length === 0) {
-        return '<div class="empty-state"><p>No content yet. Click "+ Add New" to get started.</p></div>';
-      }
-
-      return items.map(item => `
-        <div class="content-card" data-id="${item.id}">
-          <div class="content-card-type">${item.type}</div>
-          ${item.type === 'quote' 
-            ? `<p class="content-card-text">"${escapeHtml(item.content)}"</p>
-               ${item.author ? `<p class="content-card-author">— ${escapeHtml(item.author)}</p>` : ''}`
-            : `<img class="content-card-image" src="${item.imageData}" alt="">
-               ${item.caption ? `<p class="content-card-text">${escapeHtml(item.caption)}</p>` : ''}`
-          }
-          ${item.tags && item.tags.length > 0 
-            ? `<div class="content-card-tags">${item.tags.map(t => `<span class="content-tag">${escapeHtml(t)}</span>`).join('')}</div>` 
-            : ''}
-          <div class="content-card-actions">
-            <button class="card-btn edit-btn" data-id="${item.id}">Edit</button>
-            <button class="card-btn danger delete-btn" data-id="${item.id}">Delete</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function setupCardActions() {
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => openEditModal(btn.dataset.id));
-      });
-
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => deleteContent(btn.dataset.id));
-      });
-    }
-
-    function openAddModal() {
-      document.getElementById('edit-modal-title').textContent = 'Add Content';
-      document.getElementById('edit-id').value = '';
-      document.getElementById('edit-type').value = 'quote';
-      document.getElementById('edit-type-quote').checked = true;
-      document.getElementById('edit-content').value = '';
-      document.getElementById('edit-author').value = '';
-      document.getElementById('edit-caption').value = '';
-      document.getElementById('edit-tags').value = '';
-      elements.editImageData.value = '';
-      elements.editImageUpload.innerHTML = `<p class="image-upload-text">Click to upload an image<br><small>(Max 2MB - JPG, PNG, GIF)</small></p>`;
-      elements.editImageUpload.classList.remove('has-image');
-      
-      // Show quote fields by default
-      document.getElementById('edit-quote-fields').classList.remove('hidden');
-      document.getElementById('edit-author-field').classList.remove('hidden');
-      document.getElementById('edit-image-fields').classList.add('hidden');
-      
-      openModal('edit');
-    }
-
-    function openEditModal(id) {
-      const item = state.content.find(c => c.id === id);
-      if (!item) return;
-
-      document.getElementById('edit-modal-title').textContent = 'Edit Content';
-      document.getElementById('edit-id').value = id;
-      document.getElementById('edit-type').value = item.type;
-      document.getElementById('edit-tags').value = (item.tags || []).join(', ');
-
-      if (item.type === 'quote') {
-        document.getElementById('edit-type-quote').checked = true;
-        document.getElementById('edit-quote-fields').classList.remove('hidden');
-        document.getElementById('edit-author-field').classList.remove('hidden');
-        document.getElementById('edit-image-fields').classList.add('hidden');
-        document.getElementById('edit-content').value = item.content || '';
-        document.getElementById('edit-author').value = item.author || '';
-      } else {
-        document.getElementById('edit-type-image').checked = true;
-        document.getElementById('edit-quote-fields').classList.add('hidden');
-        document.getElementById('edit-author-field').classList.add('hidden');
-        document.getElementById('edit-image-fields').classList.remove('hidden');
-        document.getElementById('edit-caption').value = item.caption || '';
-        elements.editImageData.value = item.imageData || '';
-        
-        if (item.imageData) {
-          elements.editImageUpload.innerHTML = `<img src="${item.imageData}" class="image-preview" alt="Preview">`;
-          elements.editImageUpload.classList.add('has-image');
-        }
-      }
-
-      openModal('edit');
-    }
-
-    async function deleteContent(id) {
-      if (!confirm('Are you sure you want to delete this?')) return;
-
-      try {
-        await deleteContentItem(id);
-      } catch (error) {
-        // Error already handled in deleteContentItem
-      }
-    }
-
-    // =====================================================
-    // DATA EXPORT/IMPORT
-    // =====================================================
-    
-    function exportData() {
-      const dataStr = JSON.stringify(state.content, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `strategy-inspiration-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    async function importData(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const imported = JSON.parse(event.target.result);
-
-          if (!Array.isArray(imported)) {
-            alert('Invalid data format. Expected an array of content items.');
-            return;
-          }
-
-          if (confirm(`Import ${imported.length} items? This will replace your current content.`)) {
-            // Delete all existing content
-            const batch = db.batch();
-            const snapshot = await contentCollection.get();
-            snapshot.forEach((doc) => {
-              batch.delete(doc.ref);
-            });
-            await batch.commit();
-
-            // Import new content
-            await bulkSaveContent(imported);
-            alert('Data imported successfully!');
-          }
-        } catch (err) {
-          console.error('Import error:', err);
-          alert('Error parsing file. Make sure it\'s a valid JSON file.');
-        }
-      };
-      reader.readAsText(file);
-
-      // Reset the input
-      e.target.value = '';
-    }
-
-    // =====================================================
-    // UTILITIES
-    // =====================================================
-    
+    // Escape HTML to prevent XSS
     function escapeHtml(str) {
       if (!str) return '';
       const div = document.createElement('div');
@@ -2050,11 +294,11 @@
       return div.innerHTML;
     }
 
-    // =====================================================
-    // START THE APP
-    // =====================================================
-    
-    document.addEventListener('DOMContentLoaded', init);
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadContent();
+      document.getElementById('generate-btn').addEventListener('click', generate);
+    });
   </script>
 </body>
 </html>
