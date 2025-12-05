@@ -120,7 +120,7 @@
     { "type": "quote", "text": "Are there people on your team who would back you up, even at their own expense?", "author": "" },
     { "type": "quote", "text": "When are you at your best?", "author": "" },
     { "type": "quote", "text": "Who are you without your job?", "author": "" },
-    { "type": "quote", "text": "Now what?", "author": "" }
+    { "type": "quote", "text": "Now what?", "author": "" },
     { "type": "image", "src": "./images/whats standing in the way.png", "caption": "" },
     { "type": "image", "src": "./images/process.png", "caption": "" },
     { "type": "image", "src": "./images/supernormal.png", "caption": "" },
