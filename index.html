@@ -152,7 +152,14 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Button */
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
     .generate-btn {
       background: var(--accent);
       color: white;
@@ -171,6 +178,79 @@
       background: #000;
       transform: translateY(-2px);
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .collide-btn {
+      background: transparent;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      padding: 1.25rem 3rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .collide-btn:hover {
+      background: var(--accent);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .collide-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Collision display */
+    .collision-pair {
+      animation: fadeIn 0.4s ease;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .collision-quote {
+      text-align: center;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .collision-quote:last-of-type {
+      border-bottom: none;
+    }
+
+    .collision-quote .quote-text {
+      font-size: 1.15rem;
+    }
+
+    .collision-note {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: var(--accent);
+      color: white;
+      font-size: 1rem;
+      line-height: 1.7;
+      animation: fadeIn 0.6s ease;
+    }
+
+    .collision-loading {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      color: var(--text-light);
+      font-style: italic;
+      font-size: 0.9rem;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
     }
 
     /* Counter */
@@ -217,6 +297,8 @@
   <nav>
     <div class="logo" onclick="location.reload()">STRATEGY INSPIRATION</div>
     <ul class="nav-links">
+      <li><a href="./antagonist.html">Antagonist</a></li>
+      <li><a href="./diagnosis.html">Diagnosis</a></li>
       <li><a href="https://stratscraps.substack.com/" target="_blank">Newsletter</a></li>
       <li><a href="https://alexmorris.co" target="_blank">Website</a></li>
     </ul>
@@ -230,7 +312,10 @@
 
     <div class="content" id="content"></div>
 
-    <button class="generate-btn" id="generate-btn">Generate</button>
+    <div class="btn-row">
+      <button class="generate-btn" id="generate-btn">Generate</button>
+      <button class="collide-btn" id="collide-btn">Collide</button>
+    </div>
     
     <div class="counter" id="counter"></div>
   </main>
@@ -294,10 +379,77 @@
       return div.innerHTML;
     }
 
+    // Collide: pick two random quotes and get an AI collision note
+    async function collide() {
+      if (items.length < 2) return;
+
+      document.getElementById('intro').classList.add('hidden');
+
+      const collideBtn = document.getElementById('collide-btn');
+      collideBtn.disabled = true;
+      collideBtn.textContent = 'Colliding...';
+
+      // Pick two different random quotes (not images)
+      const quotes = items.filter(item => item.type === 'quote');
+      if (quotes.length < 2) return;
+
+      let idx1, idx2;
+      idx1 = Math.floor(Math.random() * quotes.length);
+      do {
+        idx2 = Math.floor(Math.random() * quotes.length);
+      } while (idx2 === idx1);
+
+      const q1 = quotes[idx1];
+      const q2 = quotes[idx2];
+      const contentDiv = document.getElementById('content');
+
+      // Show the two quotes immediately
+      contentDiv.innerHTML = `
+        <div class="collision-pair">
+          <div class="collision-quote">
+            <p class="quote-text">${escapeHtml(q1.text)}</p>
+            ${q1.author ? `<p class="quote-author">— ${escapeHtml(q1.author)}</p>` : ''}
+          </div>
+          <div class="collision-quote">
+            <p class="quote-text">${escapeHtml(q2.text)}</p>
+            ${q2.author ? `<p class="quote-author">— ${escapeHtml(q2.author)}</p>` : ''}
+          </div>
+          <div class="collision-loading">Finding the collision...</div>
+        </div>
+      `;
+
+      try {
+        const response = await fetch('/.netlify/functions/collide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quotes: [q1, q2] }),
+        });
+
+        const data = await response.json();
+
+        if (data.collision) {
+          const loadingEl = contentDiv.querySelector('.collision-loading');
+          if (loadingEl) {
+            loadingEl.outerHTML = `<div class="collision-note">${escapeHtml(data.collision)}</div>`;
+          }
+        }
+      } catch (error) {
+        console.error('Collision error:', error);
+        const loadingEl = contentDiv.querySelector('.collision-loading');
+        if (loadingEl) {
+          loadingEl.textContent = 'Could not generate collision. Check your API configuration.';
+        }
+      }
+
+      collideBtn.disabled = false;
+      collideBtn.textContent = 'Collide';
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       loadContent();
       document.getElementById('generate-btn').addEventListener('click', generate);
+      document.getElementById('collide-btn').addEventListener('click', collide);
     });
   </script>
 </body>
