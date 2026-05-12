@@ -135,6 +135,22 @@
     { "type": "image", "src": "./images/repeat.png", "caption": "" },
     { "type": "image", "src": "./images/despite.png", "caption": "" },
     { "type": "image", "src": "./images/same.png", "caption": "" },
-    { "type": "image", "src": "./images/contrast.png", "caption": "" }
+    { "type": "image", "src": "./images/contrast.png", "caption": "" },
+    { "type": "image", "src": "./images/newsletter-27.jpeg", "caption": "" },
+    { "type": "image", "src": "./images/2018-08-03 08-33.jpeg", "caption": "" },
+    { "type": "image", "src": "./images/Document_20240731_0007.jpeg", "caption": "" },
+    { "type": "image", "src": "./images/IMG_C7CCB3ADDE22-1.jpeg", "caption": "" },
+    { "type": "image", "src": "./images/Screen Shot 2017-11-01 at 10.38.59 AM.png", "caption": "" },
+    { "type": "image", "src": "./images/Screen Shot 2018-12-06 at 9.15.41 AM.png", "caption": "" },
+    { "type": "image", "src": "./images/Screenshot 2019-10-15 14.44.01.png", "caption": "" },
+    { "type": "image", "src": "./images/Screenshot 2019-10-15 14.57.44.png", "caption": "" },
+    { "type": "image", "src": "./images/Screenshot 2020-05-06 10.49.45.png", "caption": "" },
+    { "type": "image", "src": "./images/Screenshot 2020-05-28 11.35.16.png", "caption": "" },
+    { "type": "image", "src": "./images/Screenshot 2024-10-15 at 11.18.19_AM.png", "caption": "" },
+    { "type": "image", "src": "./images/Screenshot 2025-01-30 at 11.47.59_AM.png", "caption": "" },
+    { "type": "image", "src": "./images/Screenshot 2025-03-25 at 3.26.18_PM.png", "caption": "" },
+    { "type": "image", "src": "./images/THE MEDIA THAT MONEY CANT BUY.png", "caption": "" },
+    { "type": "image", "src": "./images/Untitled 3.jpeg", "caption": "" },
+    { "type": "image", "src": "./images/arena-cached-image.webp", "caption": "" }
   ]
 }
