@@ -1,17 +1,38 @@
 const Anthropic = require("@anthropic-ai/sdk");
 
 const client = new Anthropic.default();
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN || "https://scrap.cards").split(",").map(s => s.trim());
+const MAX_INPUT = 5000;
+
+function headers(origin) {
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return { "Content-Type": "application/json", "Access-Control-Allow-Origin": allowed, "Vary": "Origin" };
+}
 
 exports.handler = async (event) => {
+  const origin = event.headers.origin || "";
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: { "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0], "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400", "Vary": "Origin" } };
+  }
+
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method not allowed" };
+  }
+
+  if (!process.env.NETLIFY_DEV && !ALLOWED_ORIGINS.includes(origin)) {
+    return { statusCode: 403, headers: headers(origin), body: JSON.stringify({ error: "Forbidden" }) };
   }
 
   try {
     const { brief } = JSON.parse(event.body);
 
     if (!brief || brief.trim().length === 0) {
-      return { statusCode: 400, body: JSON.stringify({ error: "Brief text is required" }) };
+      return { statusCode: 400, headers: headers(origin), body: JSON.stringify({ error: "Brief text is required" }) };
+    }
+
+    if (brief.length > MAX_INPUT) {
+      return { statusCode: 400, headers: headers(origin), body: JSON.stringify({ error: "Input too long" }) };
     }
 
     const message = await client.messages.create({
@@ -40,13 +61,14 @@ Each voice gets exactly 2-3 sentences. Be brutal. Be specific to the actual brie
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: headers(origin),
       body: JSON.stringify({ attack }),
     };
   } catch (error) {
     console.error("Antagonist error:", error);
     return {
       statusCode: 500,
+      headers: headers(origin),
       body: JSON.stringify({ error: "Failed to generate antagonist response" }),
     };
   }

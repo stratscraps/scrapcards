@@ -1,17 +1,33 @@
 const Anthropic = require("@anthropic-ai/sdk");
 
 const client = new Anthropic.default();
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN || "https://scrap.cards").split(",").map(s => s.trim());
+
+function headers(origin) {
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return { "Content-Type": "application/json", "Access-Control-Allow-Origin": allowed, "Vary": "Origin" };
+}
 
 exports.handler = async (event) => {
+  const origin = event.headers.origin || "";
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: { "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0], "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400", "Vary": "Origin" } };
+  }
+
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method not allowed" };
+  }
+
+  if (!process.env.NETLIFY_DEV && !ALLOWED_ORIGINS.includes(origin)) {
+    return { statusCode: 403, headers: headers(origin), body: JSON.stringify({ error: "Forbidden" }) };
   }
 
   try {
     const { quotes } = JSON.parse(event.body);
 
     if (!quotes || quotes.length < 2) {
-      return { statusCode: 400, body: JSON.stringify({ error: "Need at least 2 quotes" }) };
+      return { statusCode: 400, headers: headers(origin), body: JSON.stringify({ error: "Need at least 2 quotes" }) };
     }
 
     const quotesText = quotes
@@ -34,13 +50,14 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: headers(origin),
       body: JSON.stringify({ collision }),
     };
   } catch (error) {
     console.error("Collide error:", error);
     return {
       statusCode: 500,
+      headers: headers(origin),
       body: JSON.stringify({ error: "Failed to generate collision" }),
     };
   }
