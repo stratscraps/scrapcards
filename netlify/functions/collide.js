@@ -1,6 +1,7 @@
 const Anthropic = require("@anthropic-ai/sdk");
 
-const client = new Anthropic.default();
+const apiKey = process.env.ANTHROPIC_API_KEY;
+const client = apiKey ? new Anthropic.default({ apiKey }) : null;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN || "https://scrap.cards").split(",").map(s => s.trim());
 
 function headers(origin) {
@@ -23,6 +24,11 @@ exports.handler = async (event) => {
     return { statusCode: 403, headers: headers(origin), body: JSON.stringify({ error: "Forbidden" }) };
   }
 
+  if (!client) {
+    console.error("ANTHROPIC_API_KEY is not set on this site — AI tools cannot run.");
+    return { statusCode: 503, headers: headers(origin), body: JSON.stringify({ error: "AI tools are not configured" }) };
+  }
+
   try {
     const { quotes } = JSON.parse(event.body);
 
@@ -35,7 +41,7 @@ exports.handler = async (event) => {
       .join("\n");
 
     const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-5",
       max_tokens: 300,
       system: `You are a provocative strategic thinker. You find non-obvious connections, tensions, and collisions between ideas. You are sharp, concise, and intellectually fearless. Never hedge. Never be safe. Never explain what the quotes mean individually — only what they reveal TOGETHER.`,
       messages: [
@@ -54,7 +60,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ collision }),
     };
   } catch (error) {
-    console.error("Collide error:", error);
+    console.error("Collide error:", error.status || "", error.message);
     return {
       statusCode: 500,
       headers: headers(origin),

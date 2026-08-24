@@ -425,12 +425,16 @@
           body: JSON.stringify({ quotes: [q1, q2] }),
         });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
+        const loadingEl = contentDiv.querySelector('.collision-loading');
 
-        if (data.collision) {
-          const loadingEl = contentDiv.querySelector('.collision-loading');
-          if (loadingEl) {
+        // fetch only throws on network failure — an HTTP 4xx/5xx lands here,
+        // so check it explicitly or the loading line hangs forever.
+        if (loadingEl) {
+          if (response.ok && data.collision) {
             loadingEl.outerHTML = `<div class="collision-note">${escapeHtml(data.collision)}</div>`;
+          } else {
+            loadingEl.textContent = data.error || 'Could not generate collision. Try again.';
           }
         }
       } catch (error) {
