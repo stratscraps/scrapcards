@@ -19,8 +19,10 @@
   from = "/antagonist.html"
   to = "/"
   status = 302
+  force = true
 
 [[redirects]]
   from = "/diagnosis.html"
   to = "/"
   status = 302
+  force = true
