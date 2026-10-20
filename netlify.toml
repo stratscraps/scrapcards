@@ -13,3 +13,14 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'"
+
+# Antagonist + Diagnosis tools hidden (broken) — pages kept in repo, redirect to home
+[[redirects]]
+  from = "/antagonist.html"
+  to = "/"
+  status = 302
+
+[[redirects]]
+  from = "/diagnosis.html"
+  to = "/"
+  status = 302
